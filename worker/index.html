@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Agape Worker App</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --white: #FFFFFF;
+      --black: #0E0E0E;
+      --green: #4CAF50;
+      --green-light: #A5D6A7;
+      --muted: #8A8A8A;
+      --success: #2D7D46;
+      --warn: #B35C00;
+      --error: #A0281E;
+      --card-bg: #FFFFFF;
+      --border: #E8E2D9;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Jost', sans-serif;
+      background: #F5F5F5;
+      color: var(--black);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--black);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      color: var(--white);
+      letter-spacing: 0.04em;
+    }
+    .logo-text span { color: var(--green); }
+    .worker-badge {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--green-light);
+      background: rgba(76,175,80,0.15);
+      border: 1px solid rgba(76,175,80,0.3);
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    /* ── States ── */
+    .state { display: none; }
+    .state.active { display: block; }
+
+    /* ── Loading ── */
+    #state-loading {
+      padding: 60px 20px;
+      text-align: center;
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { color: var(--muted); font-size: 14px; }
+
+    /* ── Error ── */
+    #state-error {
+      padding: 40px 20px;
+      text-align: center;
+    }
+    .error-icon { font-size: 48px; margin-bottom: 16px; }
+    .error-title { font-family: 'Cormorant Garamond', serif; font-size: 24px; margin-bottom: 8px; }
+    .error-msg { color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+    /* ── Job Card ── */
+    #state-job { padding: 20px; max-width: 520px; margin: 0 auto; }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #4CAF50;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .status-label {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .status-value {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .status-scheduled { color: #2E7D32; }
+    .status-in_progress { color: var(--green); }
+    .status-completed { color: var(--success); }
+
+    .job-hero {
+      background: var(--black);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .job-hero::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 120px; height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(76,175,80,0.15), transparent 70%);
+    }
+    .job-type-tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--green);
+      background: rgba(76,175,80,0.12);
+      border: 1px solid rgba(76,175,80,0.25);
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+    .property-address {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 26px;
+      font-weight: 600;
+      color: var(--white);
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+    .property-city {
+      font-size: 13px;
+      color: rgba(250,247,242,0.5);
+      margin-bottom: 16px;
+    }
+    .checkout-block {
+      background: rgba(250,247,242,0.06);
+      border: 1px solid rgba(250,247,242,0.1);
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .checkout-icon { font-size: 20px; }
+    .checkout-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(250,247,242,0.45);
+      margin-bottom: 2px;
+    }
+    .checkout-time {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--green);
+    }
+    .checkout-date {
+      font-size: 12px;
+      color: rgba(250,247,242,0.6);
+    }
+
+    /* ── Info Cards ── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .info-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .info-card.full { grid-column: 1 / -1; }
+    .info-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .info-value {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--black);
+      line-height: 1.4;
+    }
+    .info-value.large {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+    }
+
+    /* ── Host Notes ── */
+    .notes-card {
+      background: #F1F8F1;
+      border: 1px solid #A5D6A7;
+      border-left: 3px solid var(--green);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .notes-header {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #2E7D32;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .notes-text {
+      font-size: 14px;
+      line-height: 1.65;
+      color: #1B5E20;
+    }
+
+    /* ── Checklist ── */
+    .checklist-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .checklist-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .checklist-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+    }
+    .checklist-item:last-child { border-bottom: none; }
+    .check-box {
+      width: 20px; height: 20px;
+      border: 2px solid var(--border);
+      border-radius: 5px;
+      flex-shrink: 0;
+      margin-top: 1px;
+      transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .checklist-item.done .check-box {
+      background: var(--success);
+      border-color: var(--success);
+    }
+    .checklist-item.done .check-box::after {
+      content: '✓';
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .checklist-item.done .check-label {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+    .check-label { font-size: 14px; line-height: 1.4; }
+    .progress-bar-wrap {
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin-top: 14px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--success);
+      border-radius: 2px;
+      transition: width 0.4s ease;
+    }
+    .progress-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 6px;
+      text-align: right;
+    }
+
+    /* ── Actions ── */
+    .actions { display: flex; flex-direction: column; gap: 10px; margin-bottom: 32px; }
+    .btn {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 12px;
+      font-family: 'Jost', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: var(--black);
+      color: var(--white);
+    }
+    .btn-primary:hover { background: #1a1a1a; transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-green {
+      background: #4CAF50;
+      color: var(--black);
+    }
+    .btn-green:hover { background: #388E3C; }
+    .btn-outline {
+      background: transparent;
+      color: var(--black);
+      border: 1.5px solid var(--border);
+    }
+    .btn-outline:hover { border-color: var(--black); }
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--black);
+      color: var(--white);
+      padding: 12px 20px;
+      border-radius: 24px;
+      font-size: 13px;
+      font-weight: 500;
+      transition: transform 0.3s ease;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--error); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo-text">Agape<span>PM</span></div>
+  <div class="worker-badge">Worker App</div>
+</header>
+
+<!-- State: Loading -->
+<div id="state-loading" class="state active">
+  <div class="spinner"></div>
+  <div class="loading-text">Loading your job details…</div>
+</div>
+
+<!-- State: Error -->
+<div id="state-error" class="state">
+  <div class="error-icon">⚠️</div>
+  <div class="error-title">Job Not Found</div>
+  <div class="error-msg" id="error-message">No job ID was provided in the URL. Please use the link sent to you by Agape.</div>
+</div>
+
+<!-- State: Job -->
+<div id="state-job" class="state">
+
+  <div class="status-bar">
+    <div class="status-dot"></div>
+    <div class="status-label">Status:</div>
+    <div class="status-value" id="job-status">Scheduled</div>
+  </div>
+
+  <!-- Hero card -->
+  <div class="job-hero">
+    <div class="job-type-tag" id="job-type">Cleaning</div>
+    <div class="property-address" id="property-address">Loading…</div>
+    <div class="property-city" id="property-city">Dallas, TX</div>
+    <div class="checkout-block">
+      <div class="checkout-icon">🕐</div>
+      <div>
+        <div class="checkout-label">Guest check-out</div>
+        <div class="checkout-time" id="checkout-time">—</div>
+        <div class="checkout-date" id="checkout-date">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info grid -->
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="info-label">Assigned To</div>
+      <div class="info-value large" id="worker-name">—</div>
+    </div>
+    <div class="info-card">
+      <div class="info-label">Service</div>
+      <div class="info-value large" id="service-type">Cleaning</div>
+    </div>
+    <div class="info-card full" id="pay-card">
+      <div class="info-label">Estimated Pay</div>
+      <div class="info-value large" id="job-pay">—</div>
+    </div>
+  </div>
+
+  <!-- Host notes -->
+  <div class="notes-card" id="notes-card" style="display:none">
+    <div class="notes-header">📋 Host Notes</div>
+    <div class="notes-text" id="host-notes">—</div>
+  </div>
+
+  <!-- Cleaning checklist (shown for cleaning jobs) -->
+  <div class="checklist-card" id="checklist-card">
+    <div class="checklist-title">✅ Cleaning Checklist</div>
+    <div id="checklist-items"></div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+    <div class="progress-label" id="progress-label">0 of 0 completed</div>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions">
+    <button class="btn btn-green" id="btn-start" onclick="startJob()">Start Job</button>
+    <button class="btn btn-primary" id="btn-complete" onclick="goToReport()" disabled>Submit Report</button>
+    <button class="btn btn-outline" onclick="openMaps()">📍 Open in Maps</button>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, updateDoc, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA4zPUPv5WjTbwdX2cjqxSEe0zJLKPsGC8",
+    authDomain: "agape-property-management.firebaseapp.com",
+    projectId: "agape-property-management",
+    storageBucket: "agape-property-management.firebasestorage.app",
+    messagingSenderId: "1083257058058",
+    appId: "1:1083257058058:web:0700dfdab2700c0ee280f3",
+    measurementId: "G-K09Y3VP7NW"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // ── Cleaning checklist items ──
+  const CLEANING_CHECKLIST = [
+    "Strip all beds and remove used linens",
+    "Replace with fresh linens and make beds",
+    "Clean and disinfect all bathrooms",
+    "Scrub toilets, sinks, mirrors, and floors",
+    "Wipe kitchen counters, stovetop, and appliances",
+    "Clean inside microwave and oven if needed",
+    "Empty all trash cans and replace bags",
+    "Vacuum all carpets and rugs",
+    "Mop hard floors",
+    "Wipe down all surfaces, light switches, door handles",
+    "Restock towels, toilet paper, and supplies",
+    "Check for guest belongings left behind",
+    "Take photos of completed clean",
+  ];
+
+  let jobData = null;
+  let propertyData = null;
+  let jobId = null;
+
+  // ── Parse URL ──
+  const params = new URLSearchParams(window.location.search);
+  jobId = params.get('jobId');
+
+  async function loadJob() {
+    if (!jobId) {
+      showError("No job ID found in the URL. Please use the link sent to you by Agape.");
+      return;
+    }
+
+    try {
+      const jobRef = doc(db, 'jobs', jobId);
+      const jobSnap = await getDoc(jobRef);
+
+      if (!jobSnap.exists()) {
+        showError(`Job "${jobId}" was not found. Please contact Agape if you think this is an error.`);
+        return;
+      }
+
+      jobData = { id: jobSnap.id, ...jobSnap.data() };
+
+      // Fetch property details if propertyId exists
+      if (jobData.propertyId) {
+        try {
+          const propRef = doc(db, 'properties', jobData.propertyId);
+          const propSnap = await getDoc(propRef);
+          if (propSnap.exists()) {
+            propertyData = { id: propSnap.id, ...propSnap.data() };
+          }
+        } catch (e) {
+          console.warn('Could not load property:', e);
+        }
+      }
+
+      renderJob();
+    } catch (err) {
+      console.error(err);
+      showError("Failed to load job. Check your connection and try again.");
+    }
+  }
+
+  function renderJob() {
+    setState('job');
+
+    // Status
+    const status = jobData.status || 'scheduled';
+    const statusEl = document.getElementById('job-status');
+    statusEl.textContent = status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+    statusEl.className = 'status-value status-' + status;
+
+    // Service type
+    const serviceType = jobData.serviceType || jobData.service_type || 'Cleaning';
+    document.getElementById('job-type').textContent = serviceType;
+    document.getElementById('service-type').textContent = serviceType;
+
+    // Address — prefer property doc, fall back to job doc
+    const address = propertyData?.address || jobData.address || 'Address not set';
+    const city = propertyData?.city || jobData.city || 'Dallas, TX';
+    document.getElementById('property-address').textContent = address;
+    document.getElementById('property-city').textContent = city;
+
+    // Check-out time
+    const coTime = jobData.checkoutTime || jobData.checkout_time || jobData.checkOutTime;
+    const coDate = jobData.checkoutDate || jobData.checkout_date || jobData.checkOutDate;
+    if (coTime) {
+      document.getElementById('checkout-time').textContent = coTime;
+    }
+    if (coDate) {
+      // Format date nicely
+      try {
+        const d = coDate.toDate ? coDate.toDate() : new Date(coDate);
+        document.getElementById('checkout-date').textContent = d.toLocaleDateString('en-US', {
+          weekday: 'long', month: 'long', day: 'numeric'
+        });
+      } catch {
+        document.getElementById('checkout-date').textContent = coDate;
+      }
+    }
+
+    // Worker name
+    const workerName = jobData.workerName || jobData.worker_name || '—';
+    document.getElementById('worker-name').textContent = workerName;
+
+    // Pay estimate
+    const pay = jobData.workerPay || jobData.worker_pay || jobData.pay;
+    if (pay) {
+      document.getElementById('job-pay').textContent = '$' + Number(pay).toFixed(2);
+    } else {
+      document.getElementById('pay-card').style.display = 'none';
+    }
+
+    // Host notes
+    const notes = jobData.hostNotes || jobData.host_notes || propertyData?.notes || propertyData?.hostNotes;
+    if (notes) {
+      document.getElementById('host-notes').textContent = notes;
+      document.getElementById('notes-card').style.display = 'block';
+    }
+
+    // Checklist (only for cleaning)
+    if (serviceType.toLowerCase().includes('clean')) {
+      buildChecklist(CLEANING_CHECKLIST);
+    } else {
+      document.getElementById('checklist-card').style.display = 'none';
+    }
+
+    // Buttons — check Firestore status AND localStorage fallback
+    const localStatus = localStorage.getItem('job_status_' + jobId);
+    if (status === 'in_progress' || localStatus === 'in_progress') {
+      document.getElementById('btn-start').disabled = true;
+      document.getElementById('btn-start').textContent = 'In Progress…';
+      document.getElementById('btn-complete').disabled = false;
+    } else if (status === 'completed') {
+      document.getElementById('btn-start').disabled = true;
+      document.getElementById('btn-complete').disabled = true;
+      document.getElementById('btn-start').textContent = 'Completed ✓';
+    }
+  }
+
+  function getSavedChecks() {
+    try { return JSON.parse(localStorage.getItem('checklist_' + jobId) || '{}'); }
+    catch { return {}; }
+  }
+
+  function saveChecks() {
+    const state = {};
+    document.querySelectorAll('.checklist-item').forEach((item, i) => {
+      state[i] = item.classList.contains('done');
+    });
+    localStorage.setItem('checklist_' + jobId, JSON.stringify(state));
+  }
+
+  function buildChecklist(items) {
+    const container = document.getElementById('checklist-items');
+    container.innerHTML = '';
+    const saved = getSavedChecks();
+    items.forEach((label, i) => {
+      const item = document.createElement('div');
+      item.className = 'checklist-item' + (saved[i] ? ' done' : '');
+      item.dataset.index = i;
+      item.innerHTML = `<div class="check-box"></div><div class="check-label">${label}</div>`;
+      item.addEventListener('click', () => {
+        item.classList.toggle('done');
+        saveChecks();
+        updateProgress();
+      });
+      container.appendChild(item);
+    });
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const items = document.querySelectorAll('.checklist-item');
+    const done = document.querySelectorAll('.checklist-item.done').length;
+    const pct = items.length ? (done / items.length) * 100 : 0;
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-label').textContent = `${done} of ${items.length} completed`;
+    if (done === items.length && items.length > 0) {
+      document.getElementById('btn-complete').disabled = false;
+    }
+  }
+
+  // ── Exposed globals ──
+  window.startJob = async function() {
+    if (!jobId) return;
+    try {
+      await updateDoc(doc(db, 'jobs', jobId), {
+        status: 'in_progress',
+        startedAt: serverTimestamp()
+      });
+      localStorage.setItem('job_status_' + jobId, 'in_progress');
+      document.getElementById('btn-start').disabled = true;
+      document.getElementById('btn-start').textContent = 'In Progress…';
+      document.getElementById('btn-complete').disabled = false;
+      document.getElementById('job-status').textContent = 'In Progress';
+      document.getElementById('job-status').className = 'status-value status-in_progress';
+      showToast('Job started! Good luck 💪', 'success');
+    } catch (err) {
+      showToast('Error updating job. Try again.', 'error');
+    }
+  };
+
+  window.goToReport = function() {
+    window.location.href = `/report/?jobId=${jobId}`;
+  };
+
+  window.openMaps = function() {
+    const address = document.getElementById('property-address').textContent;
+    const city = document.getElementById('property-city').textContent;
+    const query = encodeURIComponent(`${address}, ${city}`);
+    window.open(`https://maps.google.com/?q=${query}`, '_blank');
+  };
+
+  // ── Helpers ──
+  function setState(name) {
+    document.querySelectorAll('.state').forEach(s => s.classList.remove('active'));
+    document.getElementById('state-' + name).classList.add('active');
+  }
+
+  function showError(msg) {
+    document.getElementById('error-message').textContent = msg;
+    setState('error');
+  }
+
+  window.showToast = function(msg, type = '') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + type;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  };
+
+  // Boot
+  loadJob();
+</script>
+</body>
+</html>
