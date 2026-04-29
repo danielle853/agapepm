@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Agape Operator Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --white: #FFFFFF;
+      --black: #0E0E0E;
+      --green: #4CAF50;
+      --green-dim: rgba(76,175,80,0.15);
+      --muted: #8A8A8A;
+      --border: #2A2A2A;
+      --border-light: #E8E2D9;
+      --card: #161616;
+      --card2: #1C1C1C;
+      --success: #2D7D46;
+      --warn: #C9830A;
+      --error: #A0281E;
+      --info: #1A5FA8;
+      --sidebar-w: 220px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Jost', sans-serif;
+      background: #0A0A0A;
+      color: #E8E2D9;
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--black);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0;
+      height: 100vh;
+      z-index: 100;
+    }
+    .sidebar-logo {
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      color: var(--white);
+      letter-spacing: 0.04em;
+    }
+    .logo-text span { color: var(--green); }
+    .logo-sub {
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .nav { padding: 12px 0; flex: 1; }
+    .nav-section {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #444;
+      padding: 12px 20px 6px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 20px;
+      font-size: 13px;
+      color: #8A8A8A;
+      cursor: pointer;
+      border-left: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .nav-item:hover { color: var(--white); background: rgba(255,255,255,0.03); }
+    .nav-item.active {
+      color: var(--white);
+      background: rgba(76,175,80,0.08);
+      border-left-color: var(--green);
+    }
+    .nav-icon { font-size: 15px; width: 20px; text-align: center; }
+    .nav-badge {
+      margin-left: auto;
+      background: var(--error);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 10px;
+      min-width: 18px;
+      text-align: center;
+    }
+
+    .sidebar-bottom {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      color: #444;
+    }
+    .live-dot {
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: pulse 2s ease-in-out infinite;
+      margin-right: 6px;
+    }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+
+    /* ── Main ── */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top bar */
+    .topbar {
+      background: var(--black);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .page-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 600;
+    }
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .topbar-time {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .btn-sm {
+      padding: 7px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: 'Jost', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: all 0.15s;
+      background: transparent;
+      color: var(--white);
+    }
+    .btn-sm:hover { background: rgba(255,255,255,0.06); }
+    .btn-sm.green { background: #4CAF50; color: var(--black); border-color: #4CAF50; }
+    .btn-sm.green:hover { background: #388E3C; }
+
+    /* ── Content ── */
+    .content {
+      padding: 24px 28px;
+      flex: 1;
+    }
+
+    /* Panels */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* Stat cards */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+    }
+    .stat-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .stat-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1;
+    }
+    .stat-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .stat-card.green { border-color: rgba(76,175,80,0.3); }
+    .stat-card.green .stat-value { color: var(--green); }
+
+    /* Section header */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 600;
+    }
+    .section-count {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* Table */
+    .data-table {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .table-head {
+      display: grid;
+      gap: 0;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #555;
+    }
+    .table-row {
+      display: grid;
+      padding: 14px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      align-items: center;
+      transition: background 0.12s;
+      cursor: pointer;
+    }
+    .table-row:hover { background: rgba(255,255,255,0.025); }
+    .table-row:last-child { border-bottom: none; }
+
+    /* Jobs table */
+    .jobs-grid { grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr 100px; }
+    .workers-grid { grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr 120px; }
+    .props-grid { grid-template-columns: 2fr 1fr 1fr 1fr 100px; }
+    .apps-grid { grid-template-columns: 2fr 1.5fr 1fr 1fr 140px; }
+
+    .cell { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cell-main { font-weight: 500; color: var(--white); }
+    .cell-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* Status pills */
+    .pill {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 20px;
+    }
+    .pill-scheduled { background: rgba(201,131,10,0.15); color: #E09B20; }
+    .pill-in_progress { background: rgba(76,175,80,0.15); color: var(--green); }
+    .pill-completed { background: rgba(45,125,70,0.15); color: #4CAF78; }
+    .pill-pending { background: rgba(26,95,168,0.15); color: #5B9BD5; }
+    .pill-approved { background: rgba(45,125,70,0.15); color: #4CAF78; }
+    .pill-rejected { background: rgba(160,40,30,0.15); color: #E05040; }
+    .pill-active { background: rgba(45,125,70,0.15); color: #4CAF78; }
+
+    /* Empty state */
+    .empty-state {
+      padding: 48px 20px;
+      text-align: center;
+      color: var(--muted);
+    }
+    .empty-icon { font-size: 32px; margin-bottom: 10px; opacity: 0.5; }
+    .empty-text { font-size: 14px; }
+
+    /* Loading spinner */
+    .spinner {
+      width: 24px; height: 24px;
+      border: 2px solid var(--border);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 40px auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Action buttons in rows */
+    .row-actions { display: flex; gap: 6px; }
+    .btn-xs {
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      font-family: 'Jost', sans-serif;
+      transition: all 0.12s;
+    }
+    .btn-xs.approve { background: rgba(45,125,70,0.2); color: #4CAF78; }
+    .btn-xs.approve:hover { background: rgba(45,125,70,0.4); }
+    .btn-xs.reject { background: rgba(160,40,30,0.2); color: #E05040; }
+    .btn-xs.reject:hover { background: rgba(160,40,30,0.4); }
+    .btn-xs.view { background: rgba(76,175,80,0.1); color: var(--green); }
+    .btn-xs.view:hover { background: rgba(76,175,80,0.25); }
+    .btn-xs.dispatch { background: rgba(76,175,80,0.15); color: var(--green); }
+    .btn-xs.dispatch:hover { background: rgba(76,175,80,0.3); }
+
+    /* Create Job Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #1A1A1A;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      width: 480px;
+      max-width: 95vw;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+    .modal-field { margin-bottom: 16px; }
+    .modal-field label {
+      display: block;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .modal-field input,
+    .modal-field select,
+    .modal-field textarea {
+      width: 100%;
+      padding: 10px 12px;
+      background: #0A0A0A;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--white);
+      font-family: 'Jost', sans-serif;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .modal-field input:focus,
+    .modal-field select:focus { border-color: #4CAF50; }
+    .modal-field select option { background: #1A1A1A; }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 24px;
+    }
+    .btn-modal {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Jost', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-modal.primary { background: #4CAF50; color: var(--black); }
+    .btn-modal.secondary { background: transparent; color: var(--white); border: 1px solid var(--border); }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      background: #1A1A1A;
+      border: 1px solid var(--border);
+      color: var(--white);
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 999;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-color: rgba(45,125,70,0.5); }
+    .toast.error { border-color: rgba(160,40,30,0.5); }
+
+    /* Refresh indicator */
+    .refresh-tag {
+      font-size: 10px;
+      color: #333;
+      letter-spacing: 0.06em;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-text">Agape<span>PM</span></div>
+    <div class="logo-sub">Operator Dashboard</div>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-section">Overview</div>
+    <div class="nav-item active" onclick="showPanel('overview', this)">
+      <span class="nav-icon">📊</span> Overview
+    </div>
+
+    <div class="nav-section">Operations</div>
+    <div class="nav-item" onclick="showPanel('jobs', this)">
+      <span class="nav-icon">📋</span> Active Jobs
+      <span class="nav-badge" id="badge-jobs">0</span>
+    </div>
+    <div class="nav-item" onclick="showPanel('properties', this)">
+      <span class="nav-icon">🏡</span> Properties
+    </div>
+    <div class="nav-item" onclick="showPanel('workers', this)">
+      <span class="nav-icon">👷</span> Workers
+    </div>
+
+    <div class="nav-section">Admin</div>
+    <div class="nav-item" onclick="showPanel('applications', this)">
+      <span class="nav-icon">📨</span> Applications
+      <span class="nav-badge" id="badge-apps" style="display:none">0</span>
+    </div>
+    <div class="nav-item" onclick="showPanel('reports', this)">
+      <span class="nav-icon">📸</span> Job Reports
+    </div>
+  </nav>
+
+  <div class="sidebar-bottom">
+    <span class="live-dot"></span> Live — Dallas, TX
+    <div class="refresh-tag" id="last-refresh">Syncing…</div>
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="main">
+  <div class="topbar">
+    <div class="page-title" id="topbar-title">Overview</div>
+    <div class="topbar-right">
+      <span class="topbar-time" id="clock">—</span>
+      <button class="btn-sm" onclick="refreshAll()">↻ Refresh</button>
+      <button class="btn-sm gold" onclick="openCreateJob()">+ Create Job</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ── OVERVIEW PANEL ── -->
+    <div class="panel active" id="panel-overview">
+      <div class="stat-grid">
+        <div class="stat-card green">
+          <div class="stat-label">Active Jobs</div>
+          <div class="stat-value" id="stat-active">—</div>
+          <div class="stat-sub">Right now</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Properties</div>
+          <div class="stat-value" id="stat-props">—</div>
+          <div class="stat-sub">Under management</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Workers</div>
+          <div class="stat-value" id="stat-workers">—</div>
+          <div class="stat-sub">Approved providers</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Pending Reviews</div>
+          <div class="stat-value" id="stat-pending">—</div>
+          <div class="stat-sub">Applications</div>
+        </div>
+      </div>
+
+      <!-- Recent jobs -->
+      <div class="section-header">
+        <div class="section-title">Recent Jobs</div>
+        <span class="section-count" id="overview-jobs-count">Loading…</span>
+      </div>
+      <div class="data-table">
+        <div class="table-head jobs-grid">
+          <div>Property / Address</div>
+          <div>Worker</div>
+          <div>Service</div>
+          <div>Checkout</div>
+          <div>Status</div>
+          <div>Action</div>
+        </div>
+        <div id="overview-jobs-body">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── JOBS PANEL ── -->
+    <div class="panel" id="panel-jobs">
+      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat-card green">
+          <div class="stat-label">In Progress</div>
+          <div class="stat-value" id="jobs-inprogress">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Scheduled Today</div>
+          <div class="stat-value" id="jobs-today">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Completed (30d)</div>
+          <div class="stat-value" id="jobs-done">—</div>
+        </div>
+      </div>
+      <div class="section-header">
+        <div class="section-title">All Jobs</div>
+      </div>
+      <div class="data-table">
+        <div class="table-head jobs-grid">
+          <div>Property / Address</div>
+          <div>Worker</div>
+          <div>Service</div>
+          <div>Checkout</div>
+          <div>Status</div>
+          <div>Action</div>
+        </div>
+        <div id="jobs-body"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- ── PROPERTIES PANEL ── -->
+    <div class="panel" id="panel-properties">
+      <div class="section-header">
+        <div class="section-title">All Properties</div>
+      </div>
+      <div class="data-table">
+        <div class="table-head props-grid">
+          <div>Address</div>
+          <div>Host</div>
+          <div>Type</div>
+          <div>Services</div>
+          <div>iCal</div>
+        </div>
+        <div id="props-body"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- ── WORKERS PANEL ── -->
+    <div class="panel" id="panel-workers">
+      <div class="section-header">
+        <div class="section-title">Service Providers</div>
+      </div>
+      <div class="data-table">
+        <div class="table-head workers-grid">
+          <div>Name</div>
+          <div>Contact</div>
+          <div>Services</div>
+          <div>Jobs Done</div>
+          <div>Status</div>
+          <div>Action</div>
+        </div>
+        <div id="workers-body"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- ── APPLICATIONS PANEL ── -->
+    <div class="panel" id="panel-applications">
+      <div class="section-header">
+        <div class="section-title">Pending Worker Applications</div>
+      </div>
+      <div class="data-table">
+        <div class="table-head apps-grid">
+          <div>Name</div>
+          <div>Contact</div>
+          <div>Services</div>
+          <div>Applied</div>
+          <div>Action</div>
+        </div>
+        <div id="apps-body"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- ── REPORTS PANEL ── -->
+    <div class="panel" id="panel-reports">
+      <div class="section-header">
+        <div class="section-title">Job Reports</div>
+      </div>
+      <div class="data-table">
+        <div class="table-head jobs-grid">
+          <div>Property</div>
+          <div>Worker</div>
+          <div>Service</div>
+          <div>Submitted</div>
+          <div>Rating</div>
+          <div>Action</div>
+        </div>
+        <div id="reports-body"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- Create Job Modal -->
+<div class="modal-overlay" id="modal-create-job">
+  <div class="modal">
+    <div class="modal-title">Create Job</div>
+    <div class="modal-sub">Manually dispatch a job to a worker</div>
+    <div class="modal-field">
+      <label>Property</label>
+      <select id="job-prop-select">
+        <option value="">Loading properties…</option>
+      </select>
+    </div>
+    <div class="modal-field">
+      <label>Worker</label>
+      <select id="job-worker-select">
+        <option value="">Loading workers…</option>
+      </select>
+    </div>
+    <div class="modal-field">
+      <label>Service Type</label>
+      <select id="job-service">
+        <option>Cleaning</option>
+        <option>Plumbing</option>
+        <option>HVAC</option>
+        <option>Lawn Care</option>
+        <option>Laundry</option>
+        <option>Errands</option>
+        <option>Moving</option>
+        <option>Staging</option>
+      </select>
+    </div>
+    <div class="modal-field">
+      <label>Checkout Date</label>
+      <input type="date" id="job-checkout-date"/>
+    </div>
+    <div class="modal-field">
+      <label>Checkout Time</label>
+      <input type="time" id="job-checkout-time" value="11:00"/>
+    </div>
+    <div class="modal-field">
+      <label>Worker Pay ($)</label>
+      <input type="number" id="job-pay" placeholder="e.g. 120.00" step="0.01"/>
+    </div>
+    <div class="modal-field">
+      <label>Host Notes (shown to worker)</label>
+      <textarea id="job-notes" rows="3" placeholder="Any special instructions…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal secondary" onclick="closeCreateJob()">Cancel</button>
+      <button class="btn-modal primary" onclick="createJob()">Dispatch Job →</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import {
+    getFirestore, collection, getDocs, addDoc, updateDoc, doc,
+    query, where, orderBy, limit, serverTimestamp, Timestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA4zPUPv5WjTbwdX2cjqxSEe0zJLKPsGC8",
+    authDomain: "agape-property-management.firebaseapp.com",
+    projectId: "agape-property-management",
+    storageBucket: "agape-property-management.firebasestorage.app",
+    messagingSenderId: "1083257058058",
+    appId: "1:1083257058058:web:0700dfdab2700c0ee280f3",
+    measurementId: "G-K09Y3VP7NW"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // ── State ──
+  let allJobs = [], allProps = [], allWorkers = [], allApps = [], allReports = [];
+
+  // ── Clock ──
+  function updateClock() {
+    document.getElementById('clock').textContent = new Date().toLocaleTimeString('en-US', {
+      hour: 'numeric', minute: '2-digit', hour12: true
+    }) + ' CT';
+  }
+  updateClock();
+  setInterval(updateClock, 30000);
+
+  // ── Navigation ──
+  window.showPanel = function(name, el) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    el.classList.add('active');
+    document.getElementById('topbar-title').textContent = el.textContent.trim().replace(/\d+/,'');
+    // Lazy render
+    if (name === 'jobs') renderJobs();
+    if (name === 'properties') renderProps();
+    if (name === 'workers') renderWorkers();
+    if (name === 'applications') renderApps();
+    if (name === 'reports') renderReports();
+  };
+
+  // ── Fetch all data ──
+  async function fetchAll() {
+    try {
+      const [jobsSnap, propsSnap, workersSnap, reportsSnap] = await Promise.all([
+        getDocs(collection(db, 'jobs')),
+        getDocs(collection(db, 'properties')),
+        getDocs(collection(db, 'workers')),
+        getDocs(collection(db, 'reports')),
+      ]);
+
+      allJobs = jobsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      allProps = propsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      allWorkers = workersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      allReports = reportsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      allApps = allWorkers.filter(w => w.status === 'pending');
+
+      renderOverview();
+      updateBadges();
+
+      document.getElementById('last-refresh').textContent =
+        'Updated ' + new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    } catch (err) {
+      console.error('Fetch error:', err);
+      toast('Error loading data. Check Firebase config.', 'error');
+    }
+  }
+
+  window.refreshAll = function() { fetchAll(); };
+
+  // ── Overview ──
+  function renderOverview() {
+    const active = allJobs.filter(j => j.status === 'in_progress').length;
+    const pending = allApps.length;
+    const approvedWorkers = allWorkers.filter(w => w.status === 'approved').length;
+
+    document.getElementById('stat-active').textContent = active;
+    document.getElementById('stat-props').textContent = allProps.length;
+    document.getElementById('stat-workers').textContent = approvedWorkers;
+    document.getElementById('stat-pending').textContent = pending;
+
+    // Overview jobs table — last 10
+    const recent = [...allJobs].sort((a,b) => tsSort(b,a)).slice(0, 10);
+    document.getElementById('overview-jobs-count').textContent = `${recent.length} recent`;
+    renderJobRows('overview-jobs-body', recent);
+  }
+
+  function updateBadges() {
+    const activeJobs = allJobs.filter(j => ['scheduled','in_progress'].includes(j.status)).length;
+    document.getElementById('badge-jobs').textContent = activeJobs;
+    document.getElementById('badge-jobs').style.display = activeJobs ? 'inline' : 'none';
+
+    const pendingApps = allApps.length;
+    document.getElementById('badge-apps').textContent = pendingApps;
+    document.getElementById('badge-apps').style.display = pendingApps ? 'inline' : 'none';
+  }
+
+  // ── Jobs ──
+  function renderJobs() {
+    const inProgress = allJobs.filter(j => j.status === 'in_progress').length;
+    const today = todayJobs().length;
+    const done = allJobs.filter(j => j.status === 'completed').length;
+    document.getElementById('jobs-inprogress').textContent = inProgress;
+    document.getElementById('jobs-today').textContent = today;
+    document.getElementById('jobs-done').textContent = done;
+    renderJobRows('jobs-body', [...allJobs].sort((a,b) => tsSort(b,a)));
+  }
+
+  function renderJobRows(containerId, jobs) {
+    const body = document.getElementById(containerId);
+    if (!jobs.length) {
+      body.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No jobs yet</div></div>`;
+      return;
+    }
+    body.innerHTML = jobs.map(j => {
+      const prop = allProps.find(p => p.id === j.propertyId);
+      const address = prop?.address || j.address || 'Unknown';
+      const worker = j.workerName || '—';
+      const service = j.serviceType || j.service_type || 'Cleaning';
+      const checkout = fmtDate(j.checkoutDate || j.checkout_date);
+      return `<div class="table-row jobs-grid" onclick="openJobLink('${j.id}')">
+        <div class="cell"><div class="cell-main">${truncate(address,28)}</div></div>
+        <div class="cell">${worker}</div>
+        <div class="cell">${service}</div>
+        <div class="cell">${checkout}</div>
+        <div class="cell"><span class="pill pill-${j.status||'scheduled'}">${(j.status||'scheduled').replace('_',' ')}</span></div>
+        <div class="cell row-actions">
+          <button class="btn-xs view" onclick="event.stopPropagation();openJobLink('${j.id}')">View</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Properties ──
+  function renderProps() {
+    const body = document.getElementById('props-body');
+    if (!allProps.length) {
+      body.innerHTML = `<div class="empty-state"><div class="empty-icon">🏡</div><div class="empty-text">No properties yet</div></div>`;
+      return;
+    }
+    body.innerHTML = allProps.map(p => {
+      const services = (p.services || []).join(', ') || '—';
+      const hasICal = p.icalUrl ? '✅ Connected' : '❌ Missing';
+      return `<div class="table-row props-grid">
+        <div class="cell"><div class="cell-main">${truncate(p.address||'—',28)}</div><div class="cell-sub">${p.city||''} ${p.zip||''}</div></div>
+        <div class="cell">${p.hostName||p.hostEmail||'—'}</div>
+        <div class="cell">${p.type||'—'}</div>
+        <div class="cell">${truncate(services,20)}</div>
+        <div class="cell">${hasICal}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Workers ──
+  function renderWorkers() {
+    const body = document.getElementById('workers-body');
+    const approved = allWorkers.filter(w => w.status === 'approved');
+    if (!approved.length) {
+      body.innerHTML = `<div class="empty-state"><div class="empty-icon">👷</div><div class="empty-text">No approved workers yet</div></div>`;
+      return;
+    }
+    body.innerHTML = approved.map(w => {
+      const jobsDone = allJobs.filter(j => j.workerId === w.id && j.status === 'completed').length;
+      const services = (w.services || []).join(', ') || w.service || '—';
+      return `<div class="table-row workers-grid">
+        <div class="cell"><div class="cell-main">${w.name||'—'}</div></div>
+        <div class="cell"><div class="cell-sub">${w.email||'—'}</div><div class="cell-sub">${w.phone||''}</div></div>
+        <div class="cell">${truncate(services,18)}</div>
+        <div class="cell">${jobsDone}</div>
+        <div class="cell"><span class="pill pill-active">Active</span></div>
+        <div class="cell row-actions">
+          <button class="btn-xs dispatch" onclick="openCreateJobFor('${w.id}','${w.name||''}')">Dispatch</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Applications ──
+  function renderApps() {
+    const body = document.getElementById('apps-body');
+    if (!allApps.length) {
+      body.innerHTML = `<div class="empty-state"><div class="empty-icon">📨</div><div class="empty-text">No pending applications</div></div>`;
+      return;
+    }
+    body.innerHTML = allApps.map(a => {
+      const services = (a.services || []).join(', ') || a.service || '—';
+      const applied = fmtDate(a.createdAt);
+      return `<div class="table-row apps-grid">
+        <div class="cell"><div class="cell-main">${a.name||'—'}</div></div>
+        <div class="cell"><div class="cell-sub">${a.email||'—'}</div><div class="cell-sub">${a.phone||''}</div></div>
+        <div class="cell">${truncate(services,18)}</div>
+        <div class="cell">${applied}</div>
+        <div class="cell row-actions">
+          <button class="btn-xs approve" onclick="approveWorker('${a.id}','${a.name||''}')">Approve</button>
+          <button class="btn-xs reject" onclick="rejectWorker('${a.id}')">Reject</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Reports ──
+  function renderReports() {
+    const body = document.getElementById('reports-body');
+    if (!allReports.length) {
+      body.innerHTML = `<div class="empty-state"><div class="empty-icon">📸</div><div class="empty-text">No reports yet</div></div>`;
+      return;
+    }
+    body.innerHTML = allReports.map(r => {
+      const prop = allProps.find(p => p.id === r.propertyId);
+      const address = prop?.address || r.address || '—';
+      return `<div class="table-row jobs-grid">
+        <div class="cell">${truncate(address,24)}</div>
+        <div class="cell">${r.workerName||'—'}</div>
+        <div class="cell">${r.serviceType||'Cleaning'}</div>
+        <div class="cell">${fmtDate(r.submittedAt||r.createdAt)}</div>
+        <div class="cell">${r.rating ? '⭐'.repeat(Number(r.rating)) : '—'}</div>
+        <div class="cell row-actions">
+          <button class="btn-xs view" onclick="viewReport('${r.id}')">View</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Worker actions ──
+  window.approveWorker = async function(id, name) {
+    try {
+      await updateDoc(doc(db, 'workers', id), { status: 'approved' });
+      toast(`✅ ${name||'Worker'} approved`, 'success');
+      await fetchAll();
+      renderApps();
+      renderWorkers();
+    } catch { toast('Error approving worker', 'error'); }
+  };
+
+  window.rejectWorker = async function(id) {
+    try {
+      await updateDoc(doc(db, 'workers', id), { status: 'rejected' });
+      toast('Worker rejected');
+      await fetchAll();
+      renderApps();
+    } catch { toast('Error rejecting worker', 'error'); }
+  };
+
+  // ── Create Job Modal ──
+  window.openCreateJob = function() {
+    populateModal();
+    document.getElementById('modal-create-job').classList.add('open');
+  };
+
+  window.openCreateJobFor = function(workerId, workerName) {
+    populateModal();
+    document.getElementById('modal-create-job').classList.add('open');
+    setTimeout(() => {
+      const sel = document.getElementById('job-worker-select');
+      for (const opt of sel.options) {
+        if (opt.value === workerId) { opt.selected = true; break; }
+      }
+    }, 50);
+  };
+
+  window.closeCreateJob = function() {
+    document.getElementById('modal-create-job').classList.remove('open');
+  };
+
+  function populateModal() {
+    // Properties
+    const propSel = document.getElementById('job-prop-select');
+    propSel.innerHTML = '<option value="">Select property…</option>' +
+      allProps.map(p => `<option value="${p.id}">${p.address||'Unknown'} (${p.hostName||p.hostEmail||''})</option>`).join('');
+
+    // Workers
+    const workerSel = document.getElementById('job-worker-select');
+    const approved = allWorkers.filter(w => w.status === 'approved');
+    workerSel.innerHTML = '<option value="">Select worker…</option>' +
+      approved.map(w => `<option value="${w.id}">${w.name||w.email||'Unknown'}</option>`).join('');
+
+    // Default date to today
+    const today = new Date().toISOString().slice(0,10);
+    document.getElementById('job-checkout-date').value = today;
+  }
+
+  window.createJob = async function() {
+    const propId = document.getElementById('job-prop-select').value;
+    const workerId = document.getElementById('job-worker-select').value;
+    const service = document.getElementById('job-service').value;
+    const checkoutDate = document.getElementById('job-checkout-date').value;
+    const checkoutTime = document.getElementById('job-checkout-time').value;
+    const pay = document.getElementById('job-pay').value;
+    const notes = document.getElementById('job-notes').value;
+
+    if (!propId || !workerId || !checkoutDate) {
+      toast('Property, worker, and checkout date are required', 'error');
+      return;
+    }
+
+    const prop = allProps.find(p => p.id === propId);
+    const worker = allWorkers.find(w => w.id === workerId);
+
+    try {
+      const jobRef = await addDoc(collection(db, 'jobs'), {
+        propertyId: propId,
+        workerId: workerId,
+        workerName: worker?.name || '',
+        workerEmail: worker?.email || '',
+        address: prop?.address || '',
+        city: prop?.city || 'Dallas',
+        serviceType: service,
+        checkoutDate: checkoutDate,
+        checkoutTime: checkoutTime || '11:00',
+        hostNotes: notes || prop?.hostNotes || '',
+        workerPay: pay ? Number(pay) : null,
+        status: 'scheduled',
+        createdAt: serverTimestamp(),
+        createdBy: 'operator',
+      });
+
+      toast(`✅ Job created! ID: ${jobRef.id.slice(0,8)}…`, 'success');
+      closeCreateJob();
+
+      // Copy job link to clipboard
+      const link = `${window.location.origin}/worker/?jobId=${jobRef.id}`;
+      try {
+        await navigator.clipboard.writeText(link);
+        toast(`Worker link copied to clipboard ✓`, 'success');
+      } catch {
+        console.log('Worker link:', link);
+      }
+
+      await fetchAll();
+      renderJobs();
+    } catch (err) {
+      console.error(err);
+      toast('Error creating job. Check console.', 'error');
+    }
+  };
+
+  // ── Helpers ──
+  window.openJobLink = function(jobId) {
+    window.open(`/worker/?jobId=${jobId}`, '_blank');
+  };
+
+  window.viewReport = function(id) {
+    window.open(`/report/?reportId=${id}`, '_blank');
+  };
+
+  function todayJobs() {
+    const today = new Date().toISOString().slice(0,10);
+    return allJobs.filter(j => {
+      const d = j.checkoutDate || j.checkout_date;
+      return d && d.slice(0,10) === today;
+    });
+  }
+
+  function tsSort(a, b) {
+    const ta = a.createdAt?.seconds || 0;
+    const tb = b.createdAt?.seconds || 0;
+    return ta - tb;
+  }
+
+  function fmtDate(val) {
+    if (!val) return '—';
+    try {
+      const d = val?.toDate ? val.toDate() : new Date(val);
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    } catch { return String(val).slice(0,10); }
+  }
+
+  function truncate(str, len) {
+    return str && str.length > len ? str.slice(0, len) + '…' : (str || '—');
+  }
+
+  function toast(msg, type = '') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + type + ' show';
+    setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  window.toast = toast;
+
+  // ── Boot ──
+  fetchAll();
+  setInterval(fetchAll, 60000); // auto-refresh every 60s
+</script>
+</body>
+</html>
