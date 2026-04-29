@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Host Onboarding — Agape PM</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --white: #FFFFFF;
+      --black: #0E0E0E;
+      --green: #4CAF50;
+      --green-light: #A5D6A7;
+      --muted: #8A8A8A;
+      --border: #E8E2D9;
+      --card-bg: #FFFFFF;
+      --error-red: #A0281E;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Jost', sans-serif;
+      background: #F5F5F5;
+      color: var(--black);
+      min-height: 100vh;
+    }
+    header {
+      background: var(--black);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 24px;
+      color: var(--white);
+      letter-spacing: 0.04em;
+    }
+    .logo span { color: var(--green); }
+    .header-sub {
+      font-size: 11px;
+      color: rgba(250,247,242,0.45);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 32px 20px 60px;
+    }
+
+    /* Progress */
+    .progress-header { margin-bottom: 32px; }
+    .progress-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .progress-subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+    .steps-bar {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .step-pip {
+      flex: 1;
+      height: 3px;
+      border-radius: 2px;
+      background: var(--border);
+      transition: background 0.3s;
+    }
+    .step-pip.done { background: #4CAF50; }
+    .step-pip.active { background: var(--black); }
+    .steps-label {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* Form cards */
+    .form-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .form-card.active { display: block; }
+    .card-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .card-desc {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    /* Fields */
+    .field { margin-bottom: 18px; }
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    label .required { color: var(--error-red); margin-left: 2px; }
+    label .opt {
+      color: var(--muted);
+      font-weight: 400;
+      letter-spacing: 0;
+      text-transform: none;
+      font-size: 10px;
+      margin-left: 4px;
+    }
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="url"],
+    input[type="number"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: 'Jost', sans-serif;
+      font-size: 14px;
+      color: var(--black);
+      background: #F5F5F5;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--black);
+    }
+    textarea { resize: vertical; min-height: 80px; }
+    select { appearance: none; cursor: pointer; }
+
+    .field-hint {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 5px;
+      line-height: 1.4;
+    }
+
+    /* iCal special styling */
+    .ical-card {
+      background: #F1F8F1;
+      border: 1.5px solid #A5D6A7;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 12px;
+    }
+    .ical-card .ical-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1B5E20;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .ical-card .ical-steps {
+      font-size: 12px;
+      color: #2E7D32;
+      line-height: 1.7;
+    }
+    .ical-card .ical-steps li {
+      margin-left: 16px;
+    }
+
+    /* Row fields */
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    /* Services checkboxes */
+    .services-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .service-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .service-check:hover { border-color: var(--black); }
+    .service-check input[type="checkbox"] { accent-color: var(--black); width: 16px; height: 16px; }
+    .service-check span { font-size: 13px; }
+
+    /* Buttons */
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .btn {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Jost', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: var(--black); color: var(--white); }
+    .btn-primary:hover { background: #1a1a1a; }
+    .btn-secondary { background: transparent; color: var(--black); border: 1.5px solid var(--border); }
+    .btn-secondary:hover { border-color: var(--black); }
+    .btn-green { background: #4CAF50; color: var(--black); }
+    .btn-green:hover { background: #388E3C; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Success */
+    #step-success {
+      text-align: center;
+      padding: 48px 24px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+    .success-icon { font-size: 56px; margin-bottom: 16px; }
+    .success-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .success-sub {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 380px;
+      margin: 0 auto 24px;
+    }
+    .success-actions { display: flex; flex-direction: column; gap: 10px; max-width: 280px; margin: 0 auto; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--black);
+      color: var(--white);
+      padding: 12px 20px;
+      border-radius: 24px;
+      font-size: 13px;
+      font-weight: 500;
+      transition: transform 0.3s;
+      z-index: 999;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.error-toast { background: var(--error-red); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Agape<span>PM</span></div>
+  <div class="header-sub">Host Onboarding</div>
+</header>
+
+<div class="container">
+
+  <div class="progress-header">
+    <div class="progress-title" id="step-title">Welcome to Agape</div>
+    <div class="progress-subtitle" id="step-subtitle">Tell us about yourself to get started</div>
+    <div class="steps-bar" id="steps-bar">
+      <div class="step-pip active" id="pip-1"></div>
+      <div class="step-pip" id="pip-2"></div>
+      <div class="step-pip" id="pip-3"></div>
+      <div class="step-pip" id="pip-4"></div>
+    </div>
+    <div class="steps-label" id="step-counter">Step 1 of 4</div>
+  </div>
+
+  <!-- Step 1: Host Info -->
+  <div class="form-card active" id="step-1">
+    <div class="card-title">About You</div>
+    <div class="card-desc">We'll use this to set up your host account and contact you about your properties.</div>
+    <div class="field">
+      <label>Full Name <span class="required">*</span></label>
+      <input type="text" id="host-name" placeholder="Jane Smith" required/>
+    </div>
+    <div class="field">
+      <label>Email Address <span class="required">*</span></label>
+      <input type="email" id="host-email" placeholder="jane@email.com" required/>
+    </div>
+    <div class="field">
+      <label>Phone Number <span class="required">*</span></label>
+      <input type="tel" id="host-phone" placeholder="(512) 000-0000" required/>
+    </div>
+    <div class="field">
+      <label>How'd You Hear About Us? <span class="opt">(optional)</span></label>
+      <select id="host-source">
+        <option value="">Select…</option>
+        <option>Airbnb community</option>
+        <option>Google search</option>
+        <option>Friend or referral</option>
+        <option>Instagram / social media</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="nextStep(1)">Continue →</button>
+    </div>
+  </div>
+
+  <!-- Step 2: Property Info -->
+  <div class="form-card" id="step-2">
+    <div class="card-title">Your Property</div>
+    <div class="card-desc">Tell us about the property you'd like us to manage.</div>
+    <div class="field">
+      <label>Property Address <span class="required">*</span></label>
+      <input type="text" id="prop-address" placeholder="123 Barton Springs Rd" required/>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>City <span class="required">*</span></label>
+        <input type="text" id="prop-city" placeholder="Dallas" required/>
+      </div>
+      <div class="field">
+        <label>ZIP Code <span class="required">*</span></label>
+        <input type="text" id="prop-zip" placeholder="78704" required/>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Bedrooms <span class="required">*</span></label>
+        <input type="number" id="prop-beds" placeholder="3" min="1" max="20" required/>
+      </div>
+      <div class="field">
+        <label>Bathrooms</label>
+        <input type="number" id="prop-baths" placeholder="2" min="1" max="20" step="0.5"/>
+      </div>
+    </div>
+    <div class="field">
+      <label>Square Footage <span class="opt">(approx)</span></label>
+      <input type="number" id="prop-sqft" placeholder="1400"/>
+      <div class="field-hint">Used to calculate your cleaning quote</div>
+    </div>
+    <div class="field">
+      <label>Property Type <span class="required">*</span></label>
+      <select id="prop-type" required>
+        <option value="">Select…</option>
+        <option value="airbnb">Airbnb / Short-term rental</option>
+        <option value="longterm">Long-term rental</option>
+        <option value="both">Both STR and long-term</option>
+      </select>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="prevStep(2)">← Back</button>
+      <button class="btn btn-primary" onclick="nextStep(2)">Continue →</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Calendar + Services -->
+  <div class="form-card" id="step-3">
+    <div class="card-title">Calendar & Services</div>
+    <div class="card-desc">Connect your Airbnb calendar so we can auto-dispatch cleaners after each checkout. Select all services you need.</div>
+
+    <!-- iCal Section -->
+    <div class="field">
+      <label>Airbnb iCal Link <span class="required">*</span></label>
+      <input type="url" id="prop-ical" placeholder="https://www.airbnb.com/calendar/ical/..." required/>
+      <div class="field-hint">Paste your Airbnb iCal export URL here — this is how we auto-dispatch after checkouts.</div>
+    </div>
+
+    <div class="ical-card">
+      <div class="ical-title">📅 How to find your iCal link</div>
+      <ol class="ical-steps">
+        <li>Go to <strong>Airbnb.com → Calendar</strong></li>
+        <li>Click <strong>Availability Settings</strong></li>
+        <li>Scroll to <strong>Export Calendar</strong></li>
+        <li>Click <strong>Export Calendar</strong> and copy the .ics URL</li>
+        <li>Paste it above</li>
+      </ol>
+    </div>
+
+    <!-- Services -->
+    <div class="field" style="margin-top:24px">
+      <label>Services Needed <span class="required">*</span></label>
+      <div class="services-grid">
+        <label class="service-check">
+          <input type="checkbox" name="service" value="cleaning" checked/>
+          <span>🧹 Cleaning</span>
+        </label>
+        <label class="service-check">
+          <input type="checkbox" name="service" value="laundry"/>
+          <span>👕 Laundry</span>
+        </label>
+        <label class="service-check">
+          <input type="checkbox" name="service" value="plumbing"/>
+          <span>🔧 Plumbing</span>
+        </label>
+        <label class="service-check">
+          <input type="checkbox" name="service" value="hvac"/>
+          <span>❄️ HVAC</span>
+        </label>
+        <label class="service-check">
+          <input type="checkbox" name="service" value="lawn"/>
+          <span>🌿 Lawn Care</span>
+        </label>
+        <label class="service-check">
+          <input type="checkbox" name="service" value="errands"/>
+          <span>📦 Errands</span>
+        </label>
+        <label class="service-check">
+          <input type="checkbox" name="service" value="moving"/>
+          <span>🚛 Moving</span>
+        </label>
+        <label class="service-check">
+          <input type="checkbox" name="service" value="staging"/>
+          <span>🛋️ Staging</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Host Notes for Cleaners <span class="opt">(optional)</span></label>
+      <textarea id="prop-notes" placeholder="e.g. Garage code is 4291. Check under beds. Always replace shampoo brand X…"></textarea>
+      <div class="field-hint">These notes will be shown to your assigned cleaner before every job.</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="prevStep(3)">← Back</button>
+      <button class="btn btn-primary" onclick="nextStep(3)">Continue →</button>
+    </div>
+  </div>
+
+  <!-- Step 4: Review + Submit -->
+  <div class="form-card" id="step-4">
+    <div class="card-title">Review & Submit</div>
+    <div class="card-desc">Everything look right? Hit submit and we'll reach out within 24 hours to confirm your first service.</div>
+
+    <div id="review-content" style="margin-bottom:24px; font-size:14px; line-height:1.8; color: var(--muted);">
+      <!-- filled dynamically -->
+    </div>
+
+    <div class="field">
+      <label>Preferred First Service Date <span class="opt">(optional)</span></label>
+      <input type="text" id="pref-date" placeholder="e.g. After Dec 5 checkout"/>
+    </div>
+
+    <div class="field">
+      <label>Anything else we should know? <span class="opt">(optional)</span></label>
+      <textarea id="extra-notes" placeholder="Special instructions, gate codes, parking info…"></textarea>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="prevStep(4)">← Back</button>
+      <button class="btn btn-green" id="btn-submit" onclick="submitForm()">Submit Application ✓</button>
+    </div>
+  </div>
+
+  <!-- Step Success -->
+  <div id="step-success" style="display:none">
+    <div class="success-icon">🏡</div>
+    <div class="success-title">You're on the list!</div>
+    <div class="success-sub">We'll review your application and reach out within 24 hours to confirm your first service. Welcome to Agape.</div>
+    <div class="success-actions">
+      <a href="/portal/" style="text-decoration:none">
+        <button class="btn btn-primary" style="width:100%">Go to Host Portal →</button>
+      </a>
+      <a href="/" style="text-decoration:none">
+        <button class="btn btn-secondary" style="width:100%">Back to Home</button>
+      </a>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA4zPUPv5WjTbwdX2cjqxSEe0zJLKPsGC8",
+    authDomain: "agape-property-management.firebaseapp.com",
+    projectId: "agape-property-management",
+    storageBucket: "agape-property-management.firebasestorage.app",
+    messagingSenderId: "1083257058058",
+    appId: "1:1083257058058:web:0700dfdab2700c0ee280f3",
+    measurementId: "G-K09Y3VP7NW"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  let currentStep = 1;
+  const totalSteps = 4;
+
+  const stepMeta = [
+    null,
+    { title: 'About You', subtitle: 'Tell us who you are' },
+    { title: 'Your Property', subtitle: 'Details about your rental' },
+    { title: 'Calendar & Services', subtitle: 'Connect Airbnb and select needs' },
+    { title: 'Review & Submit', subtitle: 'Almost done!' },
+  ];
+
+  window.nextStep = function(from) {
+    if (!validateStep(from)) return;
+    if (from === 3) buildReview();
+    goToStep(from + 1);
+  };
+
+  window.prevStep = function(from) {
+    goToStep(from - 1);
+  };
+
+  function goToStep(n) {
+    document.getElementById(`step-${currentStep}`).classList.remove('active');
+    currentStep = n;
+    document.getElementById(`step-${currentStep}`).classList.add('active');
+    updateProgress();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function updateProgress() {
+    document.getElementById('step-title').textContent = stepMeta[currentStep].title;
+    document.getElementById('step-subtitle').textContent = stepMeta[currentStep].subtitle;
+    document.getElementById('step-counter').textContent = `Step ${currentStep} of ${totalSteps}`;
+    for (let i = 1; i <= totalSteps; i++) {
+      const pip = document.getElementById(`pip-${i}`);
+      pip.className = 'step-pip' + (i < currentStep ? ' done' : i === currentStep ? ' active' : '');
+    }
+  }
+
+  function validateStep(step) {
+    const required = document.querySelectorAll(`#step-${step} [required]`);
+    for (const el of required) {
+      if (!el.value.trim()) {
+        el.focus();
+        toast('Please fill in all required fields', 'error-toast');
+        return false;
+      }
+    }
+    // iCal URL validation
+    if (step === 3) {
+      const ical = document.getElementById('prop-ical').value.trim();
+      if (ical && !ical.startsWith('http')) {
+        toast('iCal link should start with https://', 'error-toast');
+        return false;
+      }
+      const services = document.querySelectorAll('input[name="service"]:checked');
+      if (services.length === 0) {
+        toast('Please select at least one service', 'error-toast');
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function buildReview() {
+    const services = [...document.querySelectorAll('input[name="service"]:checked')]
+      .map(el => el.value).join(', ');
+    document.getElementById('review-content').innerHTML = `
+      <p><strong>Name:</strong> ${val('host-name')}</p>
+      <p><strong>Email:</strong> ${val('host-email')}</p>
+      <p><strong>Phone:</strong> ${val('host-phone')}</p>
+      <p><strong>Address:</strong> ${val('prop-address')}, ${val('prop-city')} ${val('prop-zip')}</p>
+      <p><strong>Property:</strong> ${val('prop-beds')} bed / ${val('prop-baths')} bath — ${val('prop-sqft')} sqft</p>
+      <p><strong>Type:</strong> ${val('prop-type')}</p>
+      <p><strong>Services:</strong> ${services}</p>
+      <p><strong>iCal:</strong> ${val('prop-ical') ? '✅ Connected' : '❌ Not provided'}</p>
+    `;
+  }
+
+  window.submitForm = async function() {
+    const btn = document.getElementById('btn-submit');
+    btn.disabled = true;
+    btn.textContent = 'Submitting…';
+
+    const services = [...document.querySelectorAll('input[name="service"]:checked')]
+      .map(el => el.value);
+
+    const hostData = {
+      name: val('host-name'),
+      email: val('host-email'),
+      phone: val('host-phone'),
+      source: val('host-source'),
+      createdAt: serverTimestamp(),
+    };
+
+    const propertyData = {
+      address: val('prop-address'),
+      city: val('prop-city'),
+      zip: val('prop-zip'),
+      bedrooms: Number(val('prop-beds')),
+      bathrooms: Number(val('prop-baths')),
+      sqft: Number(val('prop-sqft')) || null,
+      type: val('prop-type'),
+      icalUrl: val('prop-ical'),            // ← iCal field saved here
+      services: services,
+      hostNotes: val('prop-notes'),
+      preferredStartDate: val('pref-date'),
+      extraNotes: val('extra-notes'),
+      hostName: val('host-name'),
+      hostEmail: val('host-email'),
+      hostPhone: val('host-phone'),
+      status: 'pending',
+      createdAt: serverTimestamp(),
+    };
+
+    try {
+      // Save to Firestore
+      const hostRef = await addDoc(collection(db, 'users'), { ...hostData, role: 'host' });
+      await addDoc(collection(db, 'properties'), { ...propertyData, hostId: hostRef.id });
+
+      // Show success
+      document.getElementById(`step-${currentStep}`).classList.remove('active');
+      document.querySelector('.progress-header').style.display = 'none';
+      document.getElementById('step-success').style.display = 'block';
+    } catch (err) {
+      console.error(err);
+      toast('Submission failed. Please try again.', 'error-toast');
+      btn.disabled = false;
+      btn.textContent = 'Submit Application ✓';
+    }
+  };
+
+  function val(id) {
+    return (document.getElementById(id)?.value || '').trim();
+  }
+
+  function toast(msg, cls = '') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + cls + ' show';
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+</script>
+</body>
+</html>
