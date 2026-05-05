@@ -1,0 +1,1932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agape — Worker App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+  import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+  import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA4zPUPv5WjTbwdX2cjqxSEe0zJLKPsGC8",
+    authDomain: "agape-property-management.firebaseapp.com",
+    projectId: "agape-property-management",
+    storageBucket: "agape-property-management.appspot.com",
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const storage = getStorage(app);
+
+  window._firebase = { db, storage, doc, getDoc, setDoc, serverTimestamp, ref, uploadBytes, getDownloadURL };
+</script>
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #111111;
+    --white: #ffffff;
+    --green: #2D9B4F;
+    --green-light: #e8f5ed;
+    --green-mid: #c2e8ce;
+    --gray-50: #f9f9f9;
+    --gray-100: #f0f0f0;
+    --gray-200: #e0e0e0;
+    --gray-400: #9e9e9e;
+    --gray-600: #555555;
+    --red: #e53935;
+    --red-light: #fdecea;
+    --red-mid: #f5c6c4;
+    --gold: #f0e6b0;
+    --font-serif: 'Cormorant Garamond', Georgia, serif;
+    --font-sans: 'Jost', sans-serif;
+    --nav-h: 52px;
+    --bottom-h: 64px;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  html, body {
+    height: 100%;
+    font-family: var(--font-sans);
+    background: var(--white);
+    color: var(--black);
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ── */
+  #top-nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: var(--nav-h);
+    background: var(--black);
+    display: flex;
+    align-items: center;
+    z-index: 100;
+    padding: 0 16px;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  #top-nav::-webkit-scrollbar { display: none; }
+
+  .nav-logo {
+    font-family: var(--font-serif);
+    color: var(--white);
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+
+  .nav-tab {
+    flex-shrink: 0;
+    padding: 5px 14px;
+    border-radius: 999px;
+    border: 1.5px solid rgba(255,255,255,0.25);
+    background: transparent;
+    color: rgba(255,255,255,0.55);
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .nav-tab.active {
+    background: var(--white);
+    color: var(--black);
+    border-color: var(--white);
+    font-weight: 600;
+  }
+  .nav-tab.done {
+    border-color: var(--green);
+    color: var(--green);
+  }
+  .nav-tab.locked {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  .nav-user {
+    margin-left: auto;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255,255,255,0.75);
+    font-size: 13px;
+    font-weight: 400;
+  }
+  .nav-avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--green);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+  }
+
+  /* ── MAIN CONTENT ── */
+  #main {
+    padding-top: var(--nav-h);
+    padding-bottom: var(--bottom-h);
+    min-height: 100%;
+  }
+
+  .page {
+    display: none;
+    padding: 24px 16px;
+    max-width: 640px;
+    margin: 0 auto;
+    animation: fadeUp 0.25s ease;
+  }
+  .page.active { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── BOTTOM BAR ── */
+  #bottom-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: var(--bottom-h);
+    background: var(--black);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    gap: 12px;
+    padding: 0 16px;
+  }
+
+  .btn-back {
+    background: transparent;
+    border: 1.5px solid rgba(255,255,255,0.3);
+    color: rgba(255,255,255,0.7);
+    padding: 0 24px;
+    height: 40px;
+    border-radius: 999px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-back:hover { border-color: rgba(255,255,255,0.6); color: white; }
+
+  .btn-next {
+    flex: 1;
+    max-width: 400px;
+    height: 44px;
+    border-radius: 999px;
+    background: var(--white);
+    color: var(--black);
+    border: none;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+  }
+  .btn-next:hover { background: #e8e8e8; }
+  .btn-next:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-next.green {
+    background: var(--green);
+    color: white;
+  }
+  .btn-next.green:hover { background: #248f45; }
+
+  /* ── CARDS & COMPONENTS ── */
+
+  /* Info banner */
+  .info-banner {
+    background: var(--green-light);
+    border: 1.5px solid var(--green-mid);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--gray-600);
+  }
+  .info-banner strong {
+    display: block;
+    font-weight: 600;
+    color: var(--black);
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+  .info-banner code {
+    display: block;
+    background: rgba(0,0,0,0.06);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 11px;
+    margin-top: 8px;
+    word-break: break-all;
+    font-family: monospace;
+    color: var(--black);
+  }
+
+  /* Field label */
+  .field-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gray-400);
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  /* Text input */
+  .text-input {
+    width: 100%;
+    padding: 13px 16px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    color: var(--black);
+    background: var(--white);
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  .text-input:focus { border-color: var(--black); }
+  .text-input::placeholder { color: var(--gray-400); }
+
+  /* Job card */
+  .job-card {
+    background: var(--black);
+    color: var(--white);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin: 20px 0;
+  }
+  .job-card-badge {
+    display: inline-block;
+    background: var(--green);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin-bottom: 12px;
+  }
+  .job-card-address {
+    font-family: var(--font-serif);
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1.1;
+    margin-bottom: 4px;
+  }
+  .job-card-city {
+    font-size: 13px;
+    color: rgba(255,255,255,0.55);
+    margin-bottom: 16px;
+  }
+  .job-card-window {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .job-card-window span {
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+  }
+  .job-card-window span strong { color: white; font-weight: 500; }
+  .job-card-duration {
+    background: var(--gold);
+    color: #7a6a00;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 999px;
+  }
+  .job-card-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: rgba(255,255,255,0.1);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+  .job-card-cell {
+    background: var(--black);
+    padding: 12px 14px;
+  }
+  .job-card-cell .cell-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 4px;
+  }
+  .job-card-cell .cell-value {
+    font-size: 15px;
+    font-weight: 500;
+    color: white;
+  }
+  .job-card-cell .cell-value.green { color: var(--green); }
+
+  /* Host notes */
+  .host-notes {
+    background: var(--green-light);
+    border-left: 3px solid var(--green);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .host-notes-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 10px;
+  }
+  .host-notes ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .host-notes li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--gray-600);
+  }
+  .host-notes li::before {
+    content: '→';
+    color: var(--green);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* Services chips */
+  .services-box {
+    background: var(--gray-50);
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 20px;
+  }
+  .services-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gray-400);
+    margin-bottom: 10px;
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .chip {
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    background: var(--gray-100);
+    color: var(--gray-600);
+    border: 1.5px solid var(--gray-200);
+  }
+  .chip.primary {
+    background: var(--black);
+    color: var(--white);
+    border-color: var(--black);
+  }
+
+  /* Section header */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .section-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: var(--black);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .section-title {
+    font-family: var(--font-serif);
+    font-size: 26px;
+    font-weight: 600;
+  }
+  .section-count {
+    background: var(--gray-100);
+    color: var(--gray-600);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+
+  /* Progress bar */
+  .progress-bar-wrap {
+    background: var(--gray-100);
+    border-radius: 999px;
+    height: 4px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--green);
+    border-radius: 999px;
+    transition: width 0.3s ease;
+  }
+  .progress-label {
+    font-size: 12px;
+    color: var(--gray-400);
+    margin-bottom: 16px;
+  }
+
+  /* Checklist */
+  .checklist {
+    background: white;
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .check-item {
+    display: flex;
+    align-items: center;
+    padding: 14px 14px;
+    border-bottom: 1px solid var(--gray-100);
+    gap: 12px;
+    transition: background 0.15s;
+  }
+  .check-item:last-child { border-bottom: none; }
+  .check-item.checked { background: var(--gray-50); }
+
+  .check-box {
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    border: 2px solid var(--gray-200);
+    background: white;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    font-size: 13px;
+    color: transparent;
+  }
+  .check-box.checked {
+    background: var(--black);
+    border-color: var(--black);
+    color: white;
+  }
+
+  .check-text {
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--black);
+    transition: color 0.15s;
+  }
+  .check-item.checked .check-text {
+    color: var(--gray-400);
+    text-decoration: line-through;
+  }
+
+  .na-btn {
+    padding: 3px 10px;
+    border-radius: 6px;
+    border: 1.5px solid var(--gray-200);
+    background: white;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gray-400);
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+    letter-spacing: 0.03em;
+  }
+  .na-btn.active {
+    background: var(--black);
+    border-color: var(--black);
+    color: white;
+  }
+
+  /* Room notes & photos */
+  .sub-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gray-400);
+    margin-bottom: 10px;
+    display: block;
+  }
+  .room-notes {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--black);
+    background: var(--gray-50);
+    resize: vertical;
+    min-height: 90px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .room-notes:focus { border-color: var(--black); background: white; }
+  .room-notes::placeholder { color: var(--gray-400); }
+
+  /* Photo grid */
+  .photo-section { margin-top: 20px; }
+  .photo-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .photo-thumb {
+    width: 80px; height: 80px;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+    border: 1.5px solid var(--gray-200);
+    position: relative;
+  }
+  .photo-add {
+    width: 80px; height: 80px;
+    border-radius: var(--radius-sm);
+    border: 2px dashed var(--gray-200);
+    background: var(--gray-50);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--gray-400);
+    font-size: 11px;
+    font-weight: 500;
+    gap: 4px;
+    transition: all 0.2s;
+  }
+  .photo-add:hover { border-color: var(--black); color: var(--black); background: var(--gray-100); }
+  .photo-add-icon { font-size: 22px; color: inherit; }
+  .photo-count-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gray-400);
+    margin-bottom: 10px;
+  }
+  .photo-count-label .count { color: var(--green); }
+
+  /* Check-in page */
+  .clock-card {
+    background: var(--black);
+    color: var(--white);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .clock-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 8px;
+  }
+  .clock-time {
+    font-family: var(--font-serif);
+    font-size: 52px;
+    font-weight: 600;
+    line-height: 1;
+    margin-bottom: 4px;
+    letter-spacing: -0.02em;
+  }
+  .clock-date {
+    font-size: 14px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 12px;
+  }
+  .clock-gps {
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    font-style: italic;
+  }
+  .clock-gps.got { color: var(--green); font-style: normal; }
+
+  .btn-checkin {
+    width: 100%;
+    padding: 16px;
+    border-radius: var(--radius-sm);
+    background: var(--green);
+    color: white;
+    border: none;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    letter-spacing: 0.02em;
+  }
+  .btn-checkin:hover { background: #248f45; }
+  .btn-checkin.done {
+    background: var(--gray-100);
+    color: var(--green);
+    cursor: default;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  /* Inventory page */
+  .inv-list {
+    background: white;
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .inv-item {
+    display: flex;
+    align-items: center;
+    padding: 13px 14px;
+    border-bottom: 1px solid var(--gray-100);
+    gap: 12px;
+  }
+  .inv-item:last-child { border-bottom: none; }
+  .inv-name {
+    flex: 1;
+    font-size: 14px;
+    color: var(--black);
+  }
+  .inv-btns {
+    display: flex;
+    gap: 6px;
+  }
+  .inv-btn {
+    padding: 5px 12px;
+    border-radius: 7px;
+    border: 1.5px solid var(--gray-200);
+    background: white;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-400);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.02em;
+  }
+  .inv-btn:hover { border-color: var(--black); color: var(--black); }
+  .inv-btn.ok.active  { background: #e8f5ed; border-color: var(--green); color: var(--green); }
+  .inv-btn.low.active { background: #fff8e1; border-color: #f9a825; color: #f9a825; }
+  .inv-btn.out.active { background: #fdecea; border-color: var(--red); color: var(--red); }
+
+  /* Damage page */
+  .damage-item-card {
+    background: var(--red-light);
+    border: 1.5px solid var(--red-mid);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .damage-item-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 10px;
+  }
+  .damage-textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--red-mid);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--black);
+    background: white;
+    resize: vertical;
+    min-height: 80px;
+    outline: none;
+  }
+  .damage-textarea:focus { border-color: var(--red); }
+  .damage-textarea::placeholder { color: #ccc; }
+
+  .btn-add-damage {
+    width: 100%;
+    padding: 14px;
+    border-radius: var(--radius-sm);
+    border: 2px dashed var(--red-mid);
+    background: var(--red-light);
+    color: var(--red);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 20px;
+  }
+  .btn-add-damage:hover { border-color: var(--red); }
+
+  .damage-photos-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 10px;
+    display: block;
+  }
+  .no-damage-hint {
+    font-size: 13px;
+    color: var(--gray-400);
+    margin-top: 16px;
+  }
+
+  /* Submit page */
+  .submit-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .submit-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: var(--green);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .submit-title {
+    font-family: var(--font-serif);
+    font-size: 28px;
+    font-weight: 600;
+  }
+
+  .stats-card {
+    background: var(--black);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--black);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .stat-cell {
+    background: #1a1a1a;
+    padding: 16px 14px;
+    text-align: center;
+  }
+  .stat-cell:first-child { border-radius: 12px 0 0 12px; }
+  .stat-cell:last-child  { border-radius: 0 12px 12px 0; }
+  .stat-value {
+    font-family: var(--font-serif);
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--green);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .stat-value.dash { color: rgba(255,255,255,0.3); font-size: 24px; }
+  .stat-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+  }
+
+  /* Condition selector */
+  .condition-section { margin-bottom: 20px; }
+  .condition-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .cond-btn {
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: 1.5px solid var(--gray-200);
+    background: white;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-600);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .cond-btn.active {
+    background: var(--black);
+    border-color: var(--black);
+    color: white;
+  }
+
+  /* Signature */
+  .sig-wrap {
+    border-bottom: 1.5px solid var(--gray-200);
+    padding: 8px 0 4px;
+    margin-top: 8px;
+  }
+  .sig-input {
+    font-family: var(--font-serif);
+    font-size: 28px;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--black);
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+  }
+  .sig-input::placeholder { color: var(--gray-200); }
+
+  /* Submit button */
+  .btn-submit-final {
+    width: 100%;
+    padding: 18px;
+    border-radius: var(--radius);
+    background: var(--green);
+    color: white;
+    border: none;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 20px;
+    letter-spacing: 0.02em;
+  }
+  .btn-submit-final:hover { background: #248f45; }
+  .btn-submit-final:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Toast */
+  #toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: var(--black);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 999;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  #toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  #toast.green { background: var(--green); }
+
+  /* Success screen */
+  #success-screen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--white);
+    z-index: 200;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px;
+    animation: fadeUp 0.4s ease;
+  }
+  #success-screen.show { display: flex; }
+  .success-icon { font-size: 64px; margin-bottom: 24px; }
+  .success-title {
+    font-family: var(--font-serif);
+    font-size: 36px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .success-sub {
+    font-size: 15px;
+    color: var(--gray-400);
+    line-height: 1.6;
+    max-width: 320px;
+  }
+
+  /* hidden file input */
+  .hidden-file { display: none; }
+
+  /* Page-specific top summaries */
+  .page-subtitle {
+    font-size: 13px;
+    color: var(--gray-400);
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+
+  /* Damage page icon */
+  .damage-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .damage-header-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: var(--red-light);
+    border: 1.5px solid var(--red-mid);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+
+  @media (min-width: 600px) {
+    .page { padding: 32px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="top-nav">
+  <span class="nav-logo">agape</span>
+  <button class="nav-tab active" data-step="0">Job Details</button>
+  <button class="nav-tab locked" data-step="1">Check-In</button>
+  <button class="nav-tab locked" data-step="2">Living Room</button>
+  <button class="nav-tab locked" data-step="3">Kitchen</button>
+  <button class="nav-tab locked" data-step="4">Bedroom</button>
+  <button class="nav-tab locked" data-step="5">Bathroom</button>
+  <button class="nav-tab locked" data-step="6">Inventory</button>
+  <button class="nav-tab locked" data-step="7">Damage</button>
+  <button class="nav-tab locked" data-step="8">Submit</button>
+  <div class="nav-user">
+    <div class="nav-avatar" id="nav-avatar">?</div>
+    <span id="nav-name">Your name</span>
+  </div>
+</nav>
+
+<main id="main">
+
+  <!-- PAGE 0: JOB DETAILS -->
+  <div class="page active" id="page-0">
+    <label class="field-label" for="worker-name">Your Name</label>
+    <input class="text-input" id="worker-name" type="text" placeholder="Enter your name to begin" autocomplete="name">
+
+    <div class="job-card" id="job-card">
+      <div class="job-card-badge" id="jc-type">Turnover Clean</div>
+      <div class="job-card-address" id="jc-address">124 Maple Drive</div>
+      <div class="job-card-city" id="jc-city">Dallas, TX 75201</div>
+      <div class="job-card-window">
+        <span>Window: <strong id="jc-window">11 AM – 3 PM</strong></span>
+        <span class="job-card-duration" id="jc-duration">4 hrs</span>
+      </div>
+      <div class="job-card-grid">
+        <div class="job-card-cell">
+          <div class="cell-label">Check-Out</div>
+          <div class="cell-value" id="jc-checkout">11:00 AM</div>
+        </div>
+        <div class="job-card-cell">
+          <div class="cell-label">Must Finish By</div>
+          <div class="cell-value green" id="jc-finish">3:00 PM</div>
+        </div>
+        <div class="job-card-cell">
+          <div class="cell-label">Property Type</div>
+          <div class="cell-value" id="jc-proptype">Airbnb</div>
+        </div>
+        <div class="job-card-cell">
+          <div class="cell-label">Size</div>
+          <div class="cell-value" id="jc-size">2 bed / 2 bath</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="host-notes" id="host-notes-box">
+      <div class="host-notes-label">Host Notes</div>
+      <ul id="host-notes-list"></ul>
+    </div>
+
+    <div class="services-box" id="services-box">
+      <div class="services-label">Services Today</div>
+      <div class="chips" id="services-chips"></div>
+    </div>
+  </div>
+
+  <!-- PAGE 1: CHECK-IN -->
+  <div class="page" id="page-1">
+    <div class="clock-card">
+      <div class="clock-label">Current Time</div>
+      <div class="clock-time" id="clock-display">--:-- --</div>
+      <div class="clock-date" id="clock-date"></div>
+      <div class="clock-gps" id="gps-status">Acquiring GPS...</div>
+    </div>
+    <button class="btn-checkin" id="checkin-btn" onclick="doCheckIn()">Check In Now</button>
+    <div style="margin-top: 16px; text-align:center;">
+      <span style="font-size:13px; color:var(--gray-400);">Having trouble? GPS will retry automatically.</span>
+    </div>
+  </div>
+
+  <!-- PAGE 2: LIVING ROOM -->
+  <div class="page" id="page-2">
+    <div class="section-header">
+      <div class="section-header-left">
+        <div class="section-icon">🛋️</div>
+        <div class="section-title">Living Room</div>
+      </div>
+      <div class="section-count" id="lr-count">0/6</div>
+    </div>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="lr-bar" style="width:0%"></div></div>
+    <div class="progress-label" id="lr-prog">0 of 6 complete</div>
+    <div class="checklist" id="lr-list"></div>
+    <label class="sub-label">Room Notes</label>
+    <textarea class="room-notes" id="lr-notes" placeholder="Issues or observations..."></textarea>
+    <div class="photo-section">
+      <div class="photo-count-label">Photos (<span class="count" id="lr-photo-count">0</span>)</div>
+      <div class="photo-grid" id="lr-photos">
+        <div class="photo-add" onclick="triggerPhoto('lr')">
+          <span class="photo-add-icon">+</span>
+          <span>Add photo</span>
+        </div>
+      </div>
+      <input type="file" accept="image/*" capture="environment" class="hidden-file" id="file-lr" onchange="handlePhoto(event,'lr')">
+    </div>
+  </div>
+
+  <!-- PAGE 3: KITCHEN -->
+  <div class="page" id="page-3">
+    <div class="section-header">
+      <div class="section-header-left">
+        <div class="section-icon">🍳</div>
+        <div class="section-title">Kitchen</div>
+      </div>
+      <div class="section-count" id="kt-count">0/8</div>
+    </div>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="kt-bar" style="width:0%"></div></div>
+    <div class="progress-label" id="kt-prog">0 of 8 complete</div>
+    <div class="checklist" id="kt-list"></div>
+    <label class="sub-label">Room Notes</label>
+    <textarea class="room-notes" id="kt-notes" placeholder="Issues or observations..."></textarea>
+    <div class="photo-section">
+      <div class="photo-count-label">Photos (<span class="count" id="kt-photo-count">0</span>)</div>
+      <div class="photo-grid" id="kt-photos">
+        <div class="photo-add" onclick="triggerPhoto('kt')">
+          <span class="photo-add-icon">+</span>
+          <span>Add photo</span>
+        </div>
+      </div>
+      <input type="file" accept="image/*" capture="environment" class="hidden-file" id="file-kt" onchange="handlePhoto(event,'kt')">
+    </div>
+  </div>
+
+  <!-- PAGE 4: BEDROOM -->
+  <div class="page" id="page-4">
+    <div class="section-header">
+      <div class="section-header-left">
+        <div class="section-icon">🛏️</div>
+        <div class="section-title">Bedroom</div>
+      </div>
+      <div class="section-count" id="bd-count">0/6</div>
+    </div>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="bd-bar" style="width:0%"></div></div>
+    <div class="progress-label" id="bd-prog">0 of 6 complete</div>
+    <div class="checklist" id="bd-list"></div>
+    <label class="sub-label">Room Notes</label>
+    <textarea class="room-notes" id="bd-notes" placeholder="Issues or observations..."></textarea>
+    <div class="photo-section">
+      <div class="photo-count-label">Photos (<span class="count" id="bd-photo-count">0</span>)</div>
+      <div class="photo-grid" id="bd-photos">
+        <div class="photo-add" onclick="triggerPhoto('bd')">
+          <span class="photo-add-icon">+</span>
+          <span>Add photo</span>
+        </div>
+      </div>
+      <input type="file" accept="image/*" capture="environment" class="hidden-file" id="file-bd" onchange="handlePhoto(event,'bd')">
+    </div>
+  </div>
+
+  <!-- PAGE 5: BATHROOM -->
+  <div class="page" id="page-5">
+    <div class="section-header">
+      <div class="section-header-left">
+        <div class="section-icon">🚿</div>
+        <div class="section-title">Bathroom</div>
+      </div>
+      <div class="section-count" id="bt-count">0/7</div>
+    </div>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="bt-bar" style="width:0%"></div></div>
+    <div class="progress-label" id="bt-prog">0 of 7 complete</div>
+    <div class="checklist" id="bt-list"></div>
+    <label class="sub-label">Room Notes</label>
+    <textarea class="room-notes" id="bt-notes" placeholder="Issues or observations..."></textarea>
+    <div class="photo-section">
+      <div class="photo-count-label">Photos (<span class="count" id="bt-photo-count">0</span>)</div>
+      <div class="photo-grid" id="bt-photos">
+        <div class="photo-add" onclick="triggerPhoto('bt')">
+          <span class="photo-add-icon">+</span>
+          <span>Add photo</span>
+        </div>
+      </div>
+      <input type="file" accept="image/*" capture="environment" class="hidden-file" id="file-bt" onchange="handlePhoto(event,'bt')">
+    </div>
+  </div>
+
+  <!-- PAGE 6: INVENTORY -->
+  <div class="page" id="page-6">
+    <div class="section-header">
+      <div class="section-header-left">
+        <div class="section-icon">📦</div>
+        <div class="section-title">Inventory</div>
+      </div>
+      <div class="section-count" id="inv-count">0/12</div>
+    </div>
+    <p class="page-subtitle">Tap the status for each item. Flag anything Low or Out so the host can reorder.</p>
+    <div class="inv-list" id="inv-list"></div>
+  </div>
+
+  <!-- PAGE 7: DAMAGE -->
+  <div class="page" id="page-7">
+    <div class="damage-header">
+      <div class="damage-header-icon">⚠️</div>
+      <div class="section-title">Damage Report</div>
+    </div>
+    <p class="page-subtitle">Document any damage or broken items. Photos required for every damage report.</p>
+    <div id="damage-items-wrap"></div>
+    <button class="btn-add-damage" onclick="addDamageItem()">+ Add another item</button>
+    <span class="damage-photos-label">Damage Photos (<span id="dmg-photo-count">0</span>)</span>
+    <div class="photo-grid" id="dmg-photos">
+      <div class="photo-add" onclick="triggerPhoto('dmg')">
+        <span class="photo-add-icon">+</span>
+        <span>Add photo</span>
+      </div>
+    </div>
+    <input type="file" accept="image/*" capture="environment" class="hidden-file" id="file-dmg" onchange="handlePhoto(event,'dmg')">
+    <p class="no-damage-hint">No damage? Tap Next to go to Submit.</p>
+  </div>
+
+  <!-- PAGE 8: SUBMIT -->
+  <div class="page" id="page-8">
+    <div class="submit-header">
+      <div class="submit-icon">✓</div>
+      <div class="submit-title">Submit Report</div>
+    </div>
+
+    <div class="progress-bar-wrap" style="margin-bottom:6px">
+      <div class="progress-bar-fill" id="submit-bar" style="width:0%"></div>
+    </div>
+    <div class="progress-label" id="submit-task-label">0 of 27 tasks complete (0%)</div>
+
+    <div class="stats-card">
+      <div class="stat-cell">
+        <div class="stat-value" id="stat-tasks">0</div>
+        <div class="stat-label">Tasks Done</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-value" id="stat-photos">0</div>
+        <div class="stat-label">Photos</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-value dash" id="stat-onsite">—</div>
+        <div class="stat-label">On-Site</div>
+      </div>
+    </div>
+
+    <div class="condition-section">
+      <span class="sub-label">Overall Condition</span>
+      <div class="condition-btns">
+        <button class="cond-btn" onclick="setCondition('Excellent')">Excellent</button>
+        <button class="cond-btn" onclick="setCondition('Good')">Good</button>
+        <button class="cond-btn" onclick="setCondition('Fair')">Fair</button>
+        <button class="cond-btn" onclick="setCondition('Needs attention')">Needs attention</button>
+      </div>
+    </div>
+
+    <label class="sub-label">Final Notes to Host</label>
+    <textarea class="room-notes" id="final-notes" placeholder="Anything else the host should know..." style="min-height:110px;margin-bottom:20px"></textarea>
+
+    <label class="sub-label">Your Signature</label>
+    <div class="sig-wrap">
+      <input class="sig-input" id="sig-input" type="text" placeholder="Sign your name">
+    </div>
+
+    <button class="btn-submit-final" id="submit-btn" onclick="submitReport()">
+      Submit to Agape Property Management
+    </button>
+  </div>
+
+</main>
+
+<!-- BOTTOM BAR -->
+<div id="bottom-bar">
+  <button class="btn-back" id="btn-back" onclick="goBack()" style="display:none">← Back</button>
+  <button class="btn-next" id="btn-next" onclick="goNext()">Next</button>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- SUCCESS -->
+<div id="success-screen">
+  <div class="success-icon">✅</div>
+  <div class="success-title">Report Submitted</div>
+  <p class="success-sub">Your cleaning report has been sent to Agape Property Management. Great work today!</p>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// DATA DEFINITIONS
+// ─────────────────────────────────────────────
+const ROOMS = {
+  lr: {
+    tasks: [
+      'Vacuum and mop all floors',
+      'Wipe surfaces, shelves and TV screen',
+      'Fluff pillows and arrange throws',
+      'Wipe remotes and electronics',
+      'Empty trash and replace liner',
+      'Check for damage or left-behind items',
+    ]
+  },
+  kt: {
+    tasks: [
+      'Clean stovetop, oven exterior and knobs',
+      'Wipe countertops and backsplash',
+      'Clean sink, faucet and disposal',
+      'Wipe microwave inside and out',
+      'Clean fridge and dishwasher exterior',
+      'Run or unload dishwasher, put away',
+      'Sweep and mop floor',
+      'Empty trash and replace liner',
+    ]
+  },
+  bd: {
+    tasks: [
+      'Make bed with fresh linens (hotel style)',
+      'Fluff and arrange all pillows',
+      'Vacuum floor including under bed',
+      'Wipe nightstands, lamps and surfaces',
+      'Check wardrobe and drawers are empty and clean',
+      'Verify hangers are stocked',
+    ]
+  },
+  bt: {
+    tasks: [
+      'Scrub toilet inside and out',
+      'Clean sink, faucet and mirror',
+      'Scrub shower/tub and clean glass door',
+      'Replace and fold fresh towels',
+      'Restock toiletries and toilet paper',
+      'Sweep and mop floor',
+      'Empty trash and replace liner',
+    ]
+  }
+};
+
+const INVENTORY_ITEMS = [
+  'Toilet paper','Paper towels','Hand soap','Dish soap',
+  'Shampoo / conditioner','Body wash','Trash bags',
+  'Coffee and tea','Extra towels','Extra linens',
+  'Dishwasher pods','Batteries (remote)'
+];
+
+const ROOM_IDS = ['lr','kt','bd','bt'];
+const ROOM_STEP = { lr:2, kt:3, bd:4, bt:5 };
+
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+let currentStep = 0;
+let jobId = '';
+let jobData = {};
+let state = {};
+
+function defaultState() {
+  return {
+    workerName: '',
+    checkedIn: false,
+    checkInTime: null,
+    checkInCoords: null,
+    lr: { tasks: {}, notes: '', photos: [] },
+    kt: { tasks: {}, notes: '', photos: [] },
+    bd: { tasks: {}, notes: '', photos: [] },
+    bt: { tasks: {}, notes: '', photos: [] },
+    inventory: {},
+    damage: { items: [''], photos: [] },
+    condition: '',
+    finalNotes: '',
+    signature: '',
+    submitted: false,
+  };
+}
+
+// ─────────────────────────────────────────────
+// PERSISTENCE
+// ─────────────────────────────────────────────
+function saveState() {
+  const key = 'agape_job_' + (jobId || 'default');
+  localStorage.setItem(key, JSON.stringify(state));
+}
+
+function loadState() {
+  const key = 'agape_job_' + (jobId || 'default');
+  const saved = localStorage.getItem(key);
+  if (saved) {
+    try {
+      state = { ...defaultState(), ...JSON.parse(saved) };
+      return true;
+    } catch(e) {}
+  }
+  state = defaultState();
+  return false;
+}
+
+// ─────────────────────────────────────────────
+// URL PARAMS → JOB DATA
+// ─────────────────────────────────────────────
+function parseJobFromURL() {
+  const p = new URLSearchParams(window.location.search);
+  jobId = p.get('jobId') || p.get('id') || 'demo';
+
+  // Build job details (fall back to demo data)
+  jobData = {
+    address:  p.get('address')  || '124 Maple Drive',
+    city:     p.get('city')     || 'Dallas, TX 75201',
+    type:     p.get('type')     || 'Turnover Clean',
+    checkout: p.get('checkout') || '11:00 AM',
+    finish:   p.get('finish')   || '3:00 PM',
+    beds:     p.get('beds')     || '2 bed / 2 bath',
+    proptype: p.get('proptype') || 'Airbnb',
+    window:   p.get('window')   || '11 AM – 3 PM',
+    duration: p.get('duration') || '4 hrs',
+    services: (p.get('services') || 'Deep clean,Fresh linens,Restock').split(','),
+    notes:    [],
+  };
+
+  // Extra notes e1, e2, e3…
+  for (let i = 1; i <= 10; i++) {
+    const note = p.get('e' + i);
+    if (note) jobData.notes.push(note);
+  }
+  if (!jobData.notes.length) {
+    jobData.notes = [
+      'Guest travelling with a pet — check under all beds',
+      'Use lavender spray on linens (under kitchen sink)',
+      'Restock coffee pods — extras in pantry top shelf',
+      'Do not disturb items in the locked storage room',
+    ];
+  }
+}
+
+// ─────────────────────────────────────────────
+// RENDER JOB CARD
+// ─────────────────────────────────────────────
+function renderJobCard() {
+  document.getElementById('jc-type').textContent    = jobData.type;
+  document.getElementById('jc-address').textContent = jobData.address;
+  document.getElementById('jc-city').textContent    = jobData.city;
+  document.getElementById('jc-window').textContent  = jobData.window;
+  document.getElementById('jc-duration').textContent= jobData.duration;
+  document.getElementById('jc-checkout').textContent= jobData.checkout;
+  document.getElementById('jc-finish').textContent  = jobData.finish;
+  document.getElementById('jc-proptype').textContent= jobData.proptype;
+  document.getElementById('jc-size').textContent    = jobData.beds;
+
+  // Notes
+  const ul = document.getElementById('host-notes-list');
+  ul.innerHTML = jobData.notes.map(n => `<li>${n}</li>`).join('');
+
+  // Services
+  const chips = document.getElementById('services-chips');
+  chips.innerHTML = jobData.services.map((s,i) =>
+    `<span class="chip ${i===0?'primary':''}">${s.trim()}</span>`
+  ).join('');
+
+  // Sample URL
+  document.getElementById('sample-url').textContent =
+    `agape.app/job?address=${jobData.address.replace(/ /g,'+')}&city=${jobData.city.replace(/ /g,'+')}&type=${jobData.type.replace(/ /g,'+')}...`;
+}
+
+// ─────────────────────────────────────────────
+// RENDER CHECKLISTS
+// ─────────────────────────────────────────────
+function renderChecklist(roomId) {
+  const tasks = ROOMS[roomId].tasks;
+  const el = document.getElementById(roomId + '-list');
+  el.innerHTML = tasks.map((t, i) => {
+    const checked   = state[roomId].tasks[i] === 'done';
+    const isNA      = state[roomId].tasks[i] === 'na';
+    const checkCls  = checked ? 'checked' : '';
+    const naCls     = isNA    ? 'active'  : '';
+    return `
+      <div class="check-item ${checkCls}" id="${roomId}-item-${i}">
+        <div class="check-box ${checkCls}" onclick="toggleTask('${roomId}',${i})">${checked ? '✓' : ''}</div>
+        <span class="check-text">${t}</span>
+        <button class="na-btn ${naCls}" onclick="toggleNA('${roomId}',${i})">N/A</button>
+      </div>`;
+  }).join('');
+  updateRoomProgress(roomId);
+}
+
+function toggleTask(roomId, i) {
+  const cur = state[roomId].tasks[i];
+  state[roomId].tasks[i] = cur === 'done' ? '' : 'done';
+  saveState();
+  renderChecklist(roomId);
+}
+
+function toggleNA(roomId, i) {
+  const cur = state[roomId].tasks[i];
+  state[roomId].tasks[i] = cur === 'na' ? '' : 'na';
+  saveState();
+  renderChecklist(roomId);
+}
+
+function updateRoomProgress(roomId) {
+  const tasks  = ROOMS[roomId].tasks;
+  const done   = tasks.filter((_,i) =>
+    state[roomId].tasks[i] === 'done' || state[roomId].tasks[i] === 'na'
+  ).length;
+  const total  = tasks.length;
+  const pct    = Math.round(done/total*100);
+
+  document.getElementById(roomId + '-count').textContent = `${done}/${total}`;
+  document.getElementById(roomId + '-bar').style.width   = pct + '%';
+  document.getElementById(roomId + '-prog').textContent  = `${done} of ${total} complete`;
+}
+
+// ─────────────────────────────────────────────
+// RENDER INVENTORY
+// ─────────────────────────────────────────────
+function renderInventory() {
+  const el = document.getElementById('inv-list');
+  el.innerHTML = INVENTORY_ITEMS.map((item, i) => {
+    const val = state.inventory[i] || '';
+    return `
+      <div class="inv-item">
+        <span class="inv-name">${item}</span>
+        <div class="inv-btns">
+          <button class="inv-btn ok  ${val==='ok'  ?'active':''}" onclick="setInv(${i},'ok')" >OK</button>
+          <button class="inv-btn low ${val==='low' ?'active':''}" onclick="setInv(${i},'low')">Low</button>
+          <button class="inv-btn out ${val==='out' ?'active':''}" onclick="setInv(${i},'out')">Out</button>
+        </div>
+      </div>`;
+  }).join('');
+  updateInvCount();
+}
+
+function setInv(i, val) {
+  state.inventory[i] = state.inventory[i] === val ? '' : val;
+  saveState();
+  renderInventory();
+}
+
+function updateInvCount() {
+  const done = Object.values(state.inventory).filter(Boolean).length;
+  document.getElementById('inv-count').textContent = `${done}/12`;
+}
+
+// ─────────────────────────────────────────────
+// DAMAGE
+// ─────────────────────────────────────────────
+function renderDamage() {
+  const wrap = document.getElementById('damage-items-wrap');
+  wrap.innerHTML = state.damage.items.map((text, i) => `
+    <div class="damage-item-card">
+      <div class="damage-item-label">Damage Item ${i+1}</div>
+      <textarea class="damage-textarea" 
+        placeholder="Location, severity, likely cause..."
+        oninput="updateDamageText(${i}, this.value)">${text}</textarea>
+    </div>
+  `).join('');
+}
+
+function addDamageItem() {
+  state.damage.items.push('');
+  saveState();
+  renderDamage();
+}
+
+function updateDamageText(i, val) {
+  state.damage.items[i] = val;
+  saveState();
+}
+
+// ─────────────────────────────────────────────
+// PHOTOS (stored as base64 in localStorage)
+// ─────────────────────────────────────────────
+function triggerPhoto(roomId) {
+  document.getElementById('file-' + roomId).click();
+}
+
+function handlePhoto(event, roomId) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const b64 = e.target.result;
+    if (roomId === 'dmg') {
+      state.damage.photos.push(b64);
+    } else {
+      state[roomId].photos.push(b64);
+    }
+    saveState();
+    renderPhotos(roomId);
+  };
+  reader.readAsDataURL(file);
+  event.target.value = ''; // reset
+}
+
+function renderPhotos(roomId) {
+  const photos = roomId === 'dmg' ? state.damage.photos : state[roomId].photos;
+  const gridId = roomId === 'dmg' ? 'dmg-photos' : roomId + '-photos';
+  const countId = roomId === 'dmg' ? 'dmg-photo-count' : roomId + '-photo-count';
+  const grid = document.getElementById(gridId);
+
+  // Rebuild
+  const thumbs = photos.map((src, i) => `
+    <div style="position:relative;display:inline-block">
+      <img src="${src}" class="photo-thumb" alt="photo">
+      <button onclick="removePhoto('${roomId}',${i})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#111;color:white;border:none;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">×</button>
+    </div>
+  `).join('');
+
+  grid.innerHTML = thumbs + `
+    <div class="photo-add" onclick="triggerPhoto('${roomId}')">
+      <span class="photo-add-icon">+</span>
+      <span>Add photo</span>
+    </div>`;
+
+  document.getElementById(countId).textContent = photos.length;
+}
+
+function removePhoto(roomId, i) {
+  if (roomId === 'dmg') {
+    state.damage.photos.splice(i, 1);
+  } else {
+    state[roomId].photos.splice(i, 1);
+  }
+  saveState();
+  renderPhotos(roomId);
+}
+
+// ─────────────────────────────────────────────
+// CHECK-IN / CLOCK
+// ─────────────────────────────────────────────
+let clockInterval;
+let gpsCoords = null;
+
+function startClock() {
+  const updateClock = () => {
+    const now = new Date();
+    const h = now.getHours();
+    const m = now.getMinutes().toString().padStart(2,'0');
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const h12 = (h % 12 || 12).toString().padStart(2,'0');
+    document.getElementById('clock-display').textContent = `${h12}:${m} ${ampm}`;
+    document.getElementById('clock-date').textContent = now.toLocaleDateString('en-US', {
+      weekday:'long', month:'long', day:'numeric'
+    });
+  };
+  updateClock();
+  clockInterval = setInterval(updateClock, 1000);
+}
+
+function getGPS() {
+  if (!navigator.geolocation) {
+    document.getElementById('gps-status').textContent = 'GPS not available on this device';
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      gpsCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      const el = document.getElementById('gps-status');
+      el.textContent = `📍 GPS locked (${gpsCoords.lat.toFixed(4)}, ${gpsCoords.lng.toFixed(4)})`;
+      el.classList.add('got');
+    },
+    () => {
+      document.getElementById('gps-status').textContent = 'GPS unavailable — check in manually';
+      document.getElementById('checkin-btn').textContent = 'GPS unavailable — check in manually';
+    },
+    { timeout: 8000 }
+  );
+}
+
+function doCheckIn() {
+  if (state.checkedIn) return;
+  const now = new Date();
+  state.checkedIn = true;
+  state.checkInTime = now.toISOString();
+  state.checkInCoords = gpsCoords;
+  saveState();
+
+  const btn = document.getElementById('checkin-btn');
+  btn.classList.add('done');
+  btn.innerHTML = `✓ Checked in at ${now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}`;
+
+  showToast('Checked in! ✓', 'green');
+}
+
+function updateCheckInUI() {
+  if (state.checkedIn) {
+    const t = new Date(state.checkInTime);
+    const btn = document.getElementById('checkin-btn');
+    btn.classList.add('done');
+    btn.innerHTML = `✓ Checked in at ${t.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}`;
+  }
+}
+
+// ─────────────────────────────────────────────
+// SUBMIT PAGE STATS
+// ─────────────────────────────────────────────
+function updateSubmitStats() {
+  let totalTasks = 0, doneTasks = 0, totalPhotos = 0;
+  ROOM_IDS.forEach(r => {
+    const tasks = ROOMS[r].tasks;
+    totalTasks += tasks.length;
+    doneTasks  += tasks.filter((_,i) =>
+      state[r].tasks[i] === 'done' || state[r].tasks[i] === 'na'
+    ).length;
+    totalPhotos += state[r].photos.length;
+  });
+  totalPhotos += state.damage.photos.length;
+
+  const pct = totalTasks ? Math.round(doneTasks/totalTasks*100) : 0;
+  document.getElementById('stat-tasks').textContent = doneTasks;
+  document.getElementById('stat-photos').textContent = totalPhotos;
+  document.getElementById('submit-bar').style.width = pct + '%';
+  document.getElementById('submit-task-label').textContent =
+    `${doneTasks} of ${totalTasks} tasks complete (${pct}%)`;
+
+  // On-site duration
+  if (state.checkInTime) {
+    const mins = Math.round((Date.now() - new Date(state.checkInTime)) / 60000);
+    const h = Math.floor(mins/60), m = mins%60;
+    document.getElementById('stat-onsite').textContent =
+      h > 0 ? `${h}h ${m}m` : `${m}m`;
+    document.getElementById('stat-onsite').classList.remove('dash');
+  }
+
+  // Restore condition
+  if (state.condition) {
+    document.querySelectorAll('.cond-btn').forEach(b => {
+      b.classList.toggle('active', b.textContent === state.condition);
+    });
+  }
+
+  // Restore final notes & signature
+  document.getElementById('final-notes').value = state.finalNotes || '';
+  document.getElementById('sig-input').value   = state.signature  || '';
+}
+
+function setCondition(val) {
+  state.condition = val;
+  saveState();
+  document.querySelectorAll('.cond-btn').forEach(b =>
+    b.classList.toggle('active', b.textContent === val)
+  );
+}
+
+// ─────────────────────────────────────────────
+// NAVIGATION
+// ─────────────────────────────────────────────
+const TOTAL_STEPS = 9;
+
+function goToStep(step) {
+  // Save textarea state before leaving
+  saveTextareas();
+
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + step).classList.add('active');
+  currentStep = step;
+  window.scrollTo(0, 0);
+
+  updateNav();
+  updateBottomBar();
+
+  // Per-page init
+  if (step === 1) { startClock(); getGPS(); updateCheckInUI(); }
+  if (step === 2) { renderChecklist('lr'); renderPhotos('lr'); }
+  if (step === 3) { renderChecklist('kt'); renderPhotos('kt'); }
+  if (step === 4) { renderChecklist('bd'); renderPhotos('bd'); }
+  if (step === 5) { renderChecklist('bt'); renderPhotos('bt'); }
+  if (step === 6) { renderInventory(); }
+  if (step === 7) { renderDamage(); renderPhotos('dmg'); }
+  if (step === 8) { updateSubmitStats(); }
+
+  // Restore notes
+  if (step >= 2 && step <= 5) {
+    const rId = ROOM_IDS[step - 2];
+    document.getElementById(rId + '-notes').value = state[rId].notes || '';
+  }
+}
+
+function saveTextareas() {
+  if (currentStep >= 2 && currentStep <= 5) {
+    const rId = ROOM_IDS[currentStep - 2];
+    const el = document.getElementById(rId + '-notes');
+    if (el) { state[rId].notes = el.value; saveState(); }
+  }
+  if (currentStep === 8) {
+    state.finalNotes = document.getElementById('final-notes').value;
+    state.signature  = document.getElementById('sig-input').value;
+    saveState();
+  }
+}
+
+function goNext() {
+  if (currentStep === 0) {
+    const name = document.getElementById('worker-name').value.trim();
+    if (!name) { showToast('Please enter your name first'); return; }
+    state.workerName = name;
+    document.getElementById('nav-name').textContent = name;
+    document.getElementById('nav-avatar').textContent = name[0].toUpperCase();
+    saveState();
+  }
+  if (currentStep < TOTAL_STEPS - 1) goToStep(currentStep + 1);
+}
+
+function goBack() {
+  if (currentStep > 0) goToStep(currentStep - 1);
+}
+
+function updateNav() {
+  const tabs = document.querySelectorAll('.nav-tab');
+  tabs.forEach((tab, i) => {
+    tab.classList.remove('active','done','locked');
+    if (i < currentStep)      tab.classList.add('done');
+    else if (i === currentStep) tab.classList.add('active');
+    else                      tab.classList.add('locked');
+  });
+
+  // Allow clicking completed tabs
+  tabs.forEach((tab, i) => {
+    tab.onclick = i <= currentStep ? () => goToStep(i) : null;
+    tab.style.cursor = i <= currentStep ? 'pointer' : 'default';
+  });
+}
+
+function updateBottomBar() {
+  const back = document.getElementById('btn-back');
+  const next = document.getElementById('btn-next');
+  back.style.display = currentStep > 0 ? 'block' : 'none';
+
+  if (currentStep === TOTAL_STEPS - 1) {
+    next.style.display = 'none';
+  } else {
+    next.style.display = 'block';
+    next.textContent = 'Next';
+  }
+}
+
+// ─────────────────────────────────────────────
+// FINAL SUBMIT
+// ─────────────────────────────────────────────
+async function submitReport() {
+  saveTextareas();
+
+  const sig = document.getElementById('sig-input').value.trim();
+  if (!sig) { showToast('Please sign before submitting'); return; }
+  if (!state.condition) { showToast('Please select overall condition'); return; }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+
+  try {
+    const { db, doc, setDoc, serverTimestamp } = window._firebase;
+    if (!db) throw new Error('Firebase not ready');
+
+    const reportData = {
+      jobId,
+      workerName: state.workerName,
+      checkInTime: state.checkInTime,
+      checkInCoords: state.checkInCoords,
+      jobData,
+      rooms: {
+        livingRoom: { tasks: state.lr.tasks, notes: state.lr.notes, photoCount: state.lr.photos.length },
+        kitchen:    { tasks: state.kt.tasks, notes: state.kt.notes, photoCount: state.kt.photos.length },
+        bedroom:    { tasks: state.bd.tasks, notes: state.bd.notes, photoCount: state.bd.photos.length },
+        bathroom:   { tasks: state.bt.tasks, notes: state.bt.notes, photoCount: state.bt.photos.length },
+      },
+      inventory: state.inventory,
+      damage: { items: state.damage.items, photoCount: state.damage.photos.length },
+      condition: state.condition,
+      finalNotes: state.finalNotes,
+      signature: sig,
+      submittedAt: serverTimestamp(),
+    };
+
+    const reportId = `${jobId}_${Date.now()}`;
+    await setDoc(doc(db, 'reports', reportId), reportData);
+
+    state.submitted = true;
+    saveState();
+    document.getElementById('success-screen').classList.add('show');
+
+  } catch(err) {
+    console.error(err);
+    btn.disabled = false;
+    btn.textContent = 'Submit to Agape Property Management';
+    showToast('Error submitting — check your connection');
+  }
+}
+
+// ─────────────────────────────────────────────
+// TOAST
+// ─────────────────────────────────────────────
+let toastTimer;
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (type ? ' ' + type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = ''; }, 2800);
+}
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+function init() {
+  parseJobFromURL();
+  loadState();
+  renderJobCard();
+
+  // Restore worker name
+  if (state.workerName) {
+    document.getElementById('worker-name').value = state.workerName;
+    document.getElementById('nav-name').textContent = state.workerName;
+    document.getElementById('nav-avatar').textContent = state.workerName[0].toUpperCase();
+  }
+
+  // Auto-save notes on blur
+  document.getElementById('final-notes').addEventListener('input', () => {
+    state.finalNotes = document.getElementById('final-notes').value;
+    saveState();
+  });
+  document.getElementById('sig-input').addEventListener('input', () => {
+    state.signature = document.getElementById('sig-input').value;
+    saveState();
+  });
+  document.getElementById('worker-name').addEventListener('input', (e) => {
+    const name = e.target.value.trim();
+    if (name) {
+      state.workerName = name;
+      document.getElementById('nav-name').textContent = name;
+      document.getElementById('nav-avatar').textContent = name[0].toUpperCase();
+      saveState();
+    }
+  });
+
+  // Wire up room note autosave
+  ROOM_IDS.forEach(r => {
+    const el = document.getElementById(r + '-notes');
+    if (el) el.addEventListener('input', () => {
+      state[r].notes = el.value;
+      saveState();
+    });
+  });
+
+  goToStep(0);
+  updateBottomBar();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
