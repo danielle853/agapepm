@@ -2,1931 +2,812 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Agape — Worker App</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-
-<!-- Firebase -->
-<script type="module">
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-  import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-  import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyA4zPUPv5WjTbwdX2cjqxSEe0zJLKPsGC8",
-    authDomain: "agape-property-management.firebaseapp.com",
-    projectId: "agape-property-management",
-    storageBucket: "agape-property-management.appspot.com",
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const storage = getStorage(app);
-
-  window._firebase = { db, storage, doc, getDoc, setDoc, serverTimestamp, ref, uploadBytes, getDownloadURL };
-</script>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Agape — Job</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --black: #111111;
-    --white: #ffffff;
-    --green: #2D9B4F;
-    --green-light: #e8f5ed;
-    --green-mid: #c2e8ce;
-    --gray-50: #f9f9f9;
-    --gray-100: #f0f0f0;
-    --gray-200: #e0e0e0;
-    --gray-400: #9e9e9e;
-    --gray-600: #555555;
-    --red: #e53935;
-    --red-light: #fdecea;
-    --red-mid: #f5c6c4;
-    --gold: #f0e6b0;
-    --font-serif: 'Cormorant Garamond', Georgia, serif;
-    --font-sans: 'Jost', sans-serif;
-    --nav-h: 52px;
-    --bottom-h: 64px;
-    --radius: 12px;
-    --radius-sm: 8px;
-  }
-
-  html, body {
-    height: 100%;
-    font-family: var(--font-sans);
-    background: var(--white);
-    color: var(--black);
-    overflow-x: hidden;
-  }
-
-  /* ── NAV ── */
-  #top-nav {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    height: var(--nav-h);
-    background: var(--black);
-    display: flex;
-    align-items: center;
-    z-index: 100;
-    padding: 0 16px;
-    gap: 8px;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  #top-nav::-webkit-scrollbar { display: none; }
-
-  .nav-logo {
-    font-family: var(--font-serif);
-    color: var(--white);
-    font-size: 18px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    margin-right: 8px;
-    flex-shrink: 0;
-  }
-
-  .nav-tab {
-    flex-shrink: 0;
-    padding: 5px 14px;
-    border-radius: 999px;
-    border: 1.5px solid rgba(255,255,255,0.25);
-    background: transparent;
-    color: rgba(255,255,255,0.55);
-    font-family: var(--font-sans);
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-  }
-  .nav-tab.active {
-    background: var(--white);
-    color: var(--black);
-    border-color: var(--white);
-    font-weight: 600;
-  }
-  .nav-tab.done {
-    border-color: var(--green);
-    color: var(--green);
-  }
-  .nav-tab.locked {
-    opacity: 0.35;
-    cursor: default;
-  }
-
-  .nav-user {
-    margin-left: auto;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: rgba(255,255,255,0.75);
-    font-size: 13px;
-    font-weight: 400;
-  }
-  .nav-avatar {
-    width: 30px; height: 30px;
-    border-radius: 50%;
-    background: var(--green);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px;
-    font-weight: 600;
-    color: white;
-  }
-
-  /* ── MAIN CONTENT ── */
-  #main {
-    padding-top: var(--nav-h);
-    padding-bottom: var(--bottom-h);
-    min-height: 100%;
-  }
-
-  .page {
-    display: none;
-    padding: 24px 16px;
-    max-width: 640px;
-    margin: 0 auto;
-    animation: fadeUp 0.25s ease;
-  }
-  .page.active { display: block; }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  /* ── BOTTOM BAR ── */
-  #bottom-bar {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    height: var(--bottom-h);
-    background: var(--black);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-    gap: 12px;
-    padding: 0 16px;
-  }
-
-  .btn-back {
-    background: transparent;
-    border: 1.5px solid rgba(255,255,255,0.3);
-    color: rgba(255,255,255,0.7);
-    padding: 0 24px;
-    height: 40px;
-    border-radius: 999px;
-    font-family: var(--font-sans);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .btn-back:hover { border-color: rgba(255,255,255,0.6); color: white; }
-
-  .btn-next {
-    flex: 1;
-    max-width: 400px;
-    height: 44px;
-    border-radius: 999px;
-    background: var(--white);
-    color: var(--black);
-    border: none;
-    font-family: var(--font-sans);
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    letter-spacing: 0.02em;
-  }
-  .btn-next:hover { background: #e8e8e8; }
-  .btn-next:disabled { opacity: 0.4; cursor: not-allowed; }
-  .btn-next.green {
-    background: var(--green);
-    color: white;
-  }
-  .btn-next.green:hover { background: #248f45; }
-
-  /* ── CARDS & COMPONENTS ── */
-
-  /* Info banner */
-  .info-banner {
-    background: var(--green-light);
-    border: 1.5px solid var(--green-mid);
-    border-radius: var(--radius);
-    padding: 16px;
-    margin-bottom: 20px;
-    font-size: 13px;
-    line-height: 1.6;
-    color: var(--gray-600);
-  }
-  .info-banner strong {
-    display: block;
-    font-weight: 600;
-    color: var(--black);
-    margin-bottom: 6px;
-    font-size: 13px;
-  }
-  .info-banner code {
-    display: block;
-    background: rgba(0,0,0,0.06);
-    border-radius: 6px;
-    padding: 8px 10px;
-    font-size: 11px;
-    margin-top: 8px;
-    word-break: break-all;
-    font-family: monospace;
-    color: var(--black);
-  }
-
-  /* Field label */
-  .field-label {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--gray-400);
-    margin-bottom: 8px;
-    display: block;
-  }
-
-  /* Text input */
-  .text-input {
-    width: 100%;
-    padding: 13px 16px;
-    border: 1.5px solid var(--gray-200);
-    border-radius: var(--radius-sm);
-    font-family: var(--font-sans);
-    font-size: 15px;
-    color: var(--black);
-    background: var(--white);
-    transition: border-color 0.2s;
-    outline: none;
-  }
-  .text-input:focus { border-color: var(--black); }
-  .text-input::placeholder { color: var(--gray-400); }
-
-  /* Job card */
-  .job-card {
-    background: var(--black);
-    color: var(--white);
-    border-radius: var(--radius);
-    padding: 20px;
-    margin: 20px 0;
-  }
-  .job-card-badge {
-    display: inline-block;
-    background: var(--green);
-    color: white;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 4px 10px;
-    border-radius: 999px;
-    margin-bottom: 12px;
-  }
-  .job-card-address {
-    font-family: var(--font-serif);
-    font-size: 26px;
-    font-weight: 600;
-    line-height: 1.1;
-    margin-bottom: 4px;
-  }
-  .job-card-city {
-    font-size: 13px;
-    color: rgba(255,255,255,0.55);
-    margin-bottom: 16px;
-  }
-  .job-card-window {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-  }
-  .job-card-window span {
-    font-size: 13px;
-    color: rgba(255,255,255,0.6);
-  }
-  .job-card-window span strong { color: white; font-weight: 500; }
-  .job-card-duration {
-    background: var(--gold);
-    color: #7a6a00;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 4px 12px;
-    border-radius: 999px;
-  }
-  .job-card-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1px;
-    background: rgba(255,255,255,0.1);
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-  }
-  .job-card-cell {
-    background: var(--black);
-    padding: 12px 14px;
-  }
-  .job-card-cell .cell-label {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.4);
-    margin-bottom: 4px;
-  }
-  .job-card-cell .cell-value {
-    font-size: 15px;
-    font-weight: 500;
-    color: white;
-  }
-  .job-card-cell .cell-value.green { color: var(--green); }
-
-  /* Host notes */
-  .host-notes {
-    background: var(--green-light);
-    border-left: 3px solid var(--green);
-    border-radius: var(--radius);
-    padding: 16px;
-    margin-bottom: 16px;
-  }
-  .host-notes-label {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--green);
-    margin-bottom: 10px;
-  }
-  .host-notes ul {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  .host-notes li {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    font-size: 13.5px;
-    line-height: 1.5;
-    color: var(--gray-600);
-  }
-  .host-notes li::before {
-    content: '→';
-    color: var(--green);
-    flex-shrink: 0;
-    margin-top: 1px;
-  }
-
-  /* Services chips */
-  .services-box {
-    background: var(--gray-50);
-    border: 1.5px solid var(--gray-200);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-    margin-bottom: 20px;
-  }
-  .services-label {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--gray-400);
-    margin-bottom: 10px;
-  }
-  .chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .chip {
-    padding: 6px 14px;
-    border-radius: 999px;
-    font-size: 13px;
-    font-weight: 500;
-    background: var(--gray-100);
-    color: var(--gray-600);
-    border: 1.5px solid var(--gray-200);
-  }
-  .chip.primary {
-    background: var(--black);
-    color: var(--white);
-    border-color: var(--black);
-  }
-
-  /* Section header */
-  .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-  }
-  .section-header-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .section-icon {
-    width: 40px; height: 40px;
-    border-radius: 10px;
-    background: var(--black);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px;
-  }
-  .section-title {
-    font-family: var(--font-serif);
-    font-size: 26px;
-    font-weight: 600;
-  }
-  .section-count {
-    background: var(--gray-100);
-    color: var(--gray-600);
-    font-size: 12px;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 999px;
-  }
-
-  /* Progress bar */
-  .progress-bar-wrap {
-    background: var(--gray-100);
-    border-radius: 999px;
-    height: 4px;
-    margin-bottom: 8px;
-    overflow: hidden;
-  }
-  .progress-bar-fill {
-    height: 100%;
-    background: var(--green);
-    border-radius: 999px;
-    transition: width 0.3s ease;
-  }
-  .progress-label {
-    font-size: 12px;
-    color: var(--gray-400);
-    margin-bottom: 16px;
-  }
-
-  /* Checklist */
-  .checklist {
-    background: white;
-    border: 1.5px solid var(--gray-200);
-    border-radius: var(--radius);
-    overflow: hidden;
-    margin-bottom: 20px;
-  }
-  .check-item {
-    display: flex;
-    align-items: center;
-    padding: 14px 14px;
-    border-bottom: 1px solid var(--gray-100);
-    gap: 12px;
-    transition: background 0.15s;
-  }
-  .check-item:last-child { border-bottom: none; }
-  .check-item.checked { background: var(--gray-50); }
-
-  .check-box {
-    width: 22px; height: 22px;
-    border-radius: 6px;
-    border: 2px solid var(--gray-200);
-    background: white;
-    cursor: pointer;
-    flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.15s;
-    font-size: 13px;
-    color: transparent;
-  }
-  .check-box.checked {
-    background: var(--black);
-    border-color: var(--black);
-    color: white;
-  }
-
-  .check-text {
-    flex: 1;
-    font-size: 14px;
-    line-height: 1.4;
-    color: var(--black);
-    transition: color 0.15s;
-  }
-  .check-item.checked .check-text {
-    color: var(--gray-400);
-    text-decoration: line-through;
-  }
-
-  .na-btn {
-    padding: 3px 10px;
-    border-radius: 6px;
-    border: 1.5px solid var(--gray-200);
-    background: white;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--gray-400);
-    cursor: pointer;
-    transition: all 0.15s;
-    flex-shrink: 0;
-    letter-spacing: 0.03em;
-  }
-  .na-btn.active {
-    background: var(--black);
-    border-color: var(--black);
-    color: white;
-  }
-
-  /* Room notes & photos */
-  .sub-label {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--gray-400);
-    margin-bottom: 10px;
-    display: block;
-  }
-  .room-notes {
-    width: 100%;
-    padding: 12px 14px;
-    border: 1.5px solid var(--gray-200);
-    border-radius: var(--radius-sm);
-    font-family: var(--font-sans);
-    font-size: 14px;
-    color: var(--black);
-    background: var(--gray-50);
-    resize: vertical;
-    min-height: 90px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  .room-notes:focus { border-color: var(--black); background: white; }
-  .room-notes::placeholder { color: var(--gray-400); }
-
-  /* Photo grid */
-  .photo-section { margin-top: 20px; }
-  .photo-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-  .photo-thumb {
-    width: 80px; height: 80px;
-    border-radius: var(--radius-sm);
-    object-fit: cover;
-    border: 1.5px solid var(--gray-200);
-    position: relative;
-  }
-  .photo-add {
-    width: 80px; height: 80px;
-    border-radius: var(--radius-sm);
-    border: 2px dashed var(--gray-200);
-    background: var(--gray-50);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: var(--gray-400);
-    font-size: 11px;
-    font-weight: 500;
-    gap: 4px;
-    transition: all 0.2s;
-  }
-  .photo-add:hover { border-color: var(--black); color: var(--black); background: var(--gray-100); }
-  .photo-add-icon { font-size: 22px; color: inherit; }
-  .photo-count-label {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--gray-400);
-    margin-bottom: 10px;
-  }
-  .photo-count-label .count { color: var(--green); }
-
-  /* Check-in page */
-  .clock-card {
-    background: var(--black);
-    color: var(--white);
-    border-radius: var(--radius);
-    padding: 28px 24px;
-    text-align: center;
-    margin-bottom: 20px;
-  }
-  .clock-label {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.4);
-    margin-bottom: 8px;
-  }
-  .clock-time {
-    font-family: var(--font-serif);
-    font-size: 52px;
-    font-weight: 600;
-    line-height: 1;
-    margin-bottom: 4px;
-    letter-spacing: -0.02em;
-  }
-  .clock-date {
-    font-size: 14px;
-    color: rgba(255,255,255,0.5);
-    margin-bottom: 12px;
-  }
-  .clock-gps {
-    font-size: 12px;
-    color: rgba(255,255,255,0.4);
-    font-style: italic;
-  }
-  .clock-gps.got { color: var(--green); font-style: normal; }
-
-  .btn-checkin {
-    width: 100%;
-    padding: 16px;
-    border-radius: var(--radius-sm);
-    background: var(--green);
-    color: white;
-    border: none;
-    font-family: var(--font-sans);
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-    letter-spacing: 0.02em;
-  }
-  .btn-checkin:hover { background: #248f45; }
-  .btn-checkin.done {
-    background: var(--gray-100);
-    color: var(--green);
-    cursor: default;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-
-  /* Inventory page */
-  .inv-list {
-    background: white;
-    border: 1.5px solid var(--gray-200);
-    border-radius: var(--radius);
-    overflow: hidden;
-    margin-bottom: 20px;
-  }
-  .inv-item {
-    display: flex;
-    align-items: center;
-    padding: 13px 14px;
-    border-bottom: 1px solid var(--gray-100);
-    gap: 12px;
-  }
-  .inv-item:last-child { border-bottom: none; }
-  .inv-name {
-    flex: 1;
-    font-size: 14px;
-    color: var(--black);
-  }
-  .inv-btns {
-    display: flex;
-    gap: 6px;
-  }
-  .inv-btn {
-    padding: 5px 12px;
-    border-radius: 7px;
-    border: 1.5px solid var(--gray-200);
-    background: white;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--gray-400);
-    cursor: pointer;
-    transition: all 0.15s;
-    letter-spacing: 0.02em;
-  }
-  .inv-btn:hover { border-color: var(--black); color: var(--black); }
-  .inv-btn.ok.active  { background: #e8f5ed; border-color: var(--green); color: var(--green); }
-  .inv-btn.low.active { background: #fff8e1; border-color: #f9a825; color: #f9a825; }
-  .inv-btn.out.active { background: #fdecea; border-color: var(--red); color: var(--red); }
-
-  /* Damage page */
-  .damage-item-card {
-    background: var(--red-light);
-    border: 1.5px solid var(--red-mid);
-    border-radius: var(--radius);
-    padding: 16px;
-    margin-bottom: 12px;
-  }
-  .damage-item-label {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--red);
-    margin-bottom: 10px;
-  }
-  .damage-textarea {
-    width: 100%;
-    padding: 12px 14px;
-    border: 1.5px solid var(--red-mid);
-    border-radius: var(--radius-sm);
-    font-family: var(--font-sans);
-    font-size: 14px;
-    color: var(--black);
-    background: white;
-    resize: vertical;
-    min-height: 80px;
-    outline: none;
-  }
-  .damage-textarea:focus { border-color: var(--red); }
-  .damage-textarea::placeholder { color: #ccc; }
-
-  .btn-add-damage {
-    width: 100%;
-    padding: 14px;
-    border-radius: var(--radius-sm);
-    border: 2px dashed var(--red-mid);
-    background: var(--red-light);
-    color: var(--red);
-    font-family: var(--font-sans);
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    margin-bottom: 20px;
-  }
-  .btn-add-damage:hover { border-color: var(--red); }
-
-  .damage-photos-label {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--red);
-    margin-bottom: 10px;
-    display: block;
-  }
-  .no-damage-hint {
-    font-size: 13px;
-    color: var(--gray-400);
-    margin-top: 16px;
-  }
-
-  /* Submit page */
-  .submit-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-  .submit-icon {
-    width: 44px; height: 44px;
-    border-radius: 12px;
-    background: var(--green);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 22px;
-  }
-  .submit-title {
-    font-family: var(--font-serif);
-    font-size: 28px;
-    font-weight: 600;
-  }
-
-  .stats-card {
-    background: var(--black);
-    border-radius: var(--radius);
-    padding: 20px;
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 1px;
-    background: var(--black);
-    margin-bottom: 20px;
-    overflow: hidden;
-  }
-  .stat-cell {
-    background: #1a1a1a;
-    padding: 16px 14px;
-    text-align: center;
-  }
-  .stat-cell:first-child { border-radius: 12px 0 0 12px; }
-  .stat-cell:last-child  { border-radius: 0 12px 12px 0; }
-  .stat-value {
-    font-family: var(--font-serif);
-    font-size: 32px;
-    font-weight: 600;
-    color: var(--green);
-    line-height: 1;
-    margin-bottom: 6px;
-  }
-  .stat-value.dash { color: rgba(255,255,255,0.3); font-size: 24px; }
-  .stat-label {
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.4);
-  }
-
-  /* Condition selector */
-  .condition-section { margin-bottom: 20px; }
-  .condition-btns {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 8px;
-  }
-  .cond-btn {
-    padding: 8px 18px;
-    border-radius: 999px;
-    border: 1.5px solid var(--gray-200);
-    background: white;
-    font-family: var(--font-sans);
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--gray-600);
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .cond-btn.active {
-    background: var(--black);
-    border-color: var(--black);
-    color: white;
-  }
-
-  /* Signature */
-  .sig-wrap {
-    border-bottom: 1.5px solid var(--gray-200);
-    padding: 8px 0 4px;
-    margin-top: 8px;
-  }
-  .sig-input {
-    font-family: var(--font-serif);
-    font-size: 28px;
-    font-weight: 400;
-    font-style: italic;
-    color: var(--black);
-    width: 100%;
-    border: none;
-    outline: none;
-    background: transparent;
-  }
-  .sig-input::placeholder { color: var(--gray-200); }
-
-  /* Submit button */
-  .btn-submit-final {
-    width: 100%;
-    padding: 18px;
-    border-radius: var(--radius);
-    background: var(--green);
-    color: white;
-    border: none;
-    font-family: var(--font-sans);
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-    margin-top: 20px;
-    letter-spacing: 0.02em;
-  }
-  .btn-submit-final:hover { background: #248f45; }
-  .btn-submit-final:disabled { opacity: 0.5; cursor: not-allowed; }
-
-  /* Toast */
-  #toast {
-    position: fixed;
-    bottom: 80px;
-    left: 50%;
-    transform: translateX(-50%) translateY(10px);
-    background: var(--black);
-    color: white;
-    padding: 12px 24px;
-    border-radius: 999px;
-    font-size: 13px;
-    font-weight: 500;
-    opacity: 0;
-    transition: all 0.3s;
-    z-index: 999;
-    pointer-events: none;
-    white-space: nowrap;
-  }
-  #toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-  #toast.green { background: var(--green); }
-
-  /* Success screen */
-  #success-screen {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: var(--white);
-    z-index: 200;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 40px;
-    animation: fadeUp 0.4s ease;
-  }
-  #success-screen.show { display: flex; }
-  .success-icon { font-size: 64px; margin-bottom: 24px; }
-  .success-title {
-    font-family: var(--font-serif);
-    font-size: 36px;
-    font-weight: 600;
-    margin-bottom: 12px;
-  }
-  .success-sub {
-    font-size: 15px;
-    color: var(--gray-400);
-    line-height: 1.6;
-    max-width: 320px;
-  }
-
-  /* hidden file input */
-  .hidden-file { display: none; }
-
-  /* Page-specific top summaries */
-  .page-subtitle {
-    font-size: 13px;
-    color: var(--gray-400);
-    margin-bottom: 20px;
-    line-height: 1.5;
-  }
-
-  /* Damage page icon */
-  .damage-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
-  }
-  .damage-header-icon {
-    width: 40px; height: 40px;
-    border-radius: 10px;
-    background: var(--red-light);
-    border: 1.5px solid var(--red-mid);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px;
-  }
-
-  @media (min-width: 600px) {
-    .page { padding: 32px 24px; }
-  }
+:root{--bg:#ffffff;--surface:#f7f7f7;--surface2:#efefef;--border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.14);--text:#0f0f0f;--muted:#888;--muted2:#bbb;--green:#16a34a;--green-light:#dcfce7;--green-mid:#86efac;--amber:#d97706;--amber-light:#fef3c7;--red:#dc2626;--red-light:#fee2e2;--black:#0f0f0f;--r:14px;--r-sm:8px;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
+.app-header{background:var(--black);padding-top:max(env(safe-area-inset-top),12px);position:sticky;top:0;z-index:100;}
+.header-inner{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;}
+.logo{font-family:'DM Serif Display',serif;font-size:20px;color:#fff;letter-spacing:0.02em;}
+.logo span{font-family:'DM Sans',sans-serif;font-size:9px;font-weight:400;color:var(--green-mid);display:block;letter-spacing:0.14em;text-transform:uppercase;margin-top:-2px;}
+.worker-badge{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:24px;padding:5px 12px 5px 6px;}
+.worker-avatar{width:26px;height:26px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;}
+.worker-name{font-size:12px;font-weight:500;color:#fff;}
+.steps-nav{display:flex;gap:4px;padding:10px 20px 12px;overflow-x:auto;scrollbar-width:none;background:var(--black);}
+.steps-nav::-webkit-scrollbar{display:none;}
+.step-pill{flex-shrink:0;font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;padding:5px 13px;border-radius:20px;border:1px solid rgba(255,255,255,0.18);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.step-pill.active{background:#fff;border-color:#fff;color:var(--black);}
+.step-pill.done{border-color:var(--green);color:var(--green);}
+.step-pill.done::before{content:'✓ ';}
+.content{padding:20px 20px 120px;max-width:480px;margin:0 auto;}
+.job-card{background:var(--black);border-radius:var(--r);overflow:hidden;margin-bottom:16px;}
+.job-card-header{padding:18px 20px;border-bottom:1px solid rgba(255,255,255,0.08);}
+.job-type-badge{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--green-mid);background:rgba(134,239,172,0.12);border:1px solid rgba(134,239,172,0.2);border-radius:6px;padding:3px 9px;display:inline-block;margin-bottom:8px;}
+.job-address{font-family:'DM Serif Display',serif;font-size:22px;color:#fff;line-height:1.2;}
+.job-address span{font-family:'DM Sans',sans-serif;font-size:13px;color:rgba(255,255,255,0.45);font-weight:400;display:block;margin-top:3px;}
+.urgency-row{display:flex;align-items:center;justify-content:space-between;margin-top:12px;}
+.urgency-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;background:var(--amber-light);color:var(--gold);}
+.job-meta-grid{display:grid;grid-template-columns:1fr 1fr;}
+.job-meta-item{padding:13px 20px;border-right:1px solid rgba(255,255,255,0.08);border-bottom:1px solid rgba(255,255,255,0.08);}
+.job-meta-item:nth-child(even){border-right:none;}
+.job-meta-item:nth-last-child(-n+2){border-bottom:none;}
+.meta-label{font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:3px;}
+.meta-value{font-size:14px;font-weight:500;color:#fff;}
+.meta-value.warn{color:#4CAF50;}
+.notes-card{background:var(--surface);border:1px solid var(--border2);border-left:3px solid var(--green);border-radius:var(--r);padding:14px 16px;margin-bottom:16px;}
+.notes-card-label{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--green);margin-bottom:8px;}
+.notes-card ul{list-style:none;display:flex;flex-direction:column;gap:6px;}
+.notes-card li{font-size:13px;color:var(--text);line-height:1.45;display:flex;gap:8px;}
+.notes-card li::before{content:'→';color:var(--green);flex-shrink:0;font-weight:600;}
+.section-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.section-icon{width:36px;height:36px;border-radius:10px;background:var(--black);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.section-title{font-size:17px;font-weight:600;color:var(--text);}
+.section-badge{margin-left:auto;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:var(--surface2);color:var(--muted);}
+.section-badge.done{background:var(--green-light);color:var(--green);}
+.progress-wrap{background:var(--surface2);border-radius:3px;height:4px;margin-bottom:4px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--green);border-radius:3px;transition:width 0.4s ease;}
+.progress-label{font-size:11px;color:var(--muted);margin-bottom:16px;}
+.task-list{background:var(--bg);border:1px solid var(--border2);border-radius:var(--r);overflow:hidden;margin-bottom:16px;}
+.task-item{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.12s;}
+.task-item:last-child{border-bottom:none;}
+.task-item:active{background:var(--surface);}
+.task-check-box{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.task-check-box.checked{background:var(--green);border-color:var(--green);}
+.task-check-box.checked::after{content:'';display:block;width:11px;height:7px;border-left:2.5px solid #fff;border-bottom:2.5px solid #fff;transform:rotate(-45deg) translateY(-1px);}
+.task-check-box.na{background:var(--surface2);border-color:var(--muted2);}
+.task-text{flex:1;font-size:14px;color:var(--text);line-height:1.35;}
+.task-text.checked{color:var(--muted2);text-decoration:line-through;}
+.task-text.na-text{color:var(--muted2);font-style:italic;}
+.task-na-btn{font-size:10px;font-weight:700;color:var(--muted);background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:3px 8px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+.task-na-btn.active{color:var(--gold);border-color:var(--gold);background:var(--amber-light);}
+.big-btn{width:100%;padding:16px;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;border:none;transition:all 0.18s;letter-spacing:0.01em;}
+.big-btn:active{transform:scale(0.97);}
+.btn-primary{background:var(--black);color:#fff;}
+.btn-primary:disabled{background:var(--surface2);color:var(--muted);cursor:default;transform:none;}
+.btn-green{background:var(--green);color:#fff;}
+.btn-ghost{background:var(--surface);color:var(--text);border:1px solid var(--border2);}
+.checkin-card{background:var(--black);border-radius:var(--r);padding:24px 20px;margin-bottom:16px;text-align:center;}
+.checkin-time{font-family:'DM Serif Display',serif;font-size:52px;color:#fff;line-height:1;margin:10px 0 4px;}
+.checkin-date{font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:18px;}
+.checkin-status{display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;margin-bottom:6px;}
+.dot-pulse{width:8px;height:8px;border-radius:50%;animation:pulse 1.5s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+.gps-coords{font-size:11px;color:rgba(255,255,255,0.3);font-family:monospace;}
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px;}
+.photo-thumb{aspect-ratio:1;border-radius:10px;object-fit:cover;border:1px solid var(--border);}
+.photo-add-btn{aspect-ratio:1;border-radius:10px;border:1.5px dashed var(--border2);background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;transition:all 0.15s;}
+.photo-add-btn:active{background:var(--surface2);}
+.photo-add-icon{font-size:24px;color:var(--muted);line-height:1;}
+.photo-add-text{font-size:10px;color:var(--muted);letter-spacing:0.04em;}
+.notes-input{width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-sm);padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);resize:none;min-height:80px;outline:none;transition:border 0.2s;margin-bottom:16px;}
+.notes-input:focus{border-color:var(--green);}
+.notes-input::placeholder{color:var(--muted2);}
+.field-label{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.09em;text-transform:uppercase;margin-bottom:8px;display:block;}
+.inv-card{background:var(--bg);border:1px solid var(--border2);border-radius:var(--r);overflow:hidden;margin-bottom:16px;}
+.inv-row{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);gap:10px;}
+.inv-row:last-child{border-bottom:none;}
+.inv-name{flex:1;font-size:14px;color:var(--text);}
+.inv-btns{display:flex;gap:4px;}
+.inv-btn{font-size:10px;font-weight:700;padding:4px 9px;border-radius:6px;border:1px solid var(--border2);color:var(--muted);background:var(--surface);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;}
+.inv-btn.ok{background:var(--green-light);color:var(--green);border-color:var(--green-mid);}
+.inv-btn.low{background:var(--amber-light);color:var(--gold);border-color:#fcd34d;}
+.inv-btn.out{background:var(--red-light);color:var(--red);border-color:#fca5a5;}
+.damage-card{background:var(--red-light);border:1px solid #fca5a5;border-left:3px solid var(--red);border-radius:var(--r);padding:14px 16px;margin-bottom:10px;}
+.damage-label{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--red);margin-bottom:8px;}
+.damage-input{width:100%;background:#fff;border:1px solid #fca5a5;border-radius:var(--r-sm);padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);resize:none;min-height:70px;outline:none;}
+.damage-input::placeholder{color:#fca5a5;}
+.add-damage-btn{width:100%;padding:12px;background:var(--red-light);border:1.5px dashed #fca5a5;border-radius:var(--r-sm);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:var(--red);cursor:pointer;margin-bottom:16px;}
+.submit-card{background:var(--black);border-radius:var(--r);padding:20px;margin-bottom:16px;}
+.submit-summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px;}
+.sum-box{background:rgba(255,255,255,0.07);border-radius:10px;padding:12px 8px;text-align:center;}
+.sum-num{font-family:'DM Serif Display',serif;font-size:28px;color:var(--green-mid);}
+.sum-lbl{font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:0.07em;text-transform:uppercase;margin-top:2px;}
+.cond-btns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.cond-btn{font-size:11px;font-weight:600;padding:6px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.5);background:none;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;}
+.cond-btn.ok{background:var(--green-light);color:var(--green);border-color:var(--green-mid);}
+.cond-btn.warn{background:var(--amber-light);color:var(--gold);border-color:#fcd34d;}
+.cond-btn.bad{background:var(--red-light);color:var(--red);border-color:#fca5a5;}
+.sig-label{font-size:10px;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;}
+.sig-input{width:100%;background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.2);padding:8px 0;font-family:'DM Serif Display',serif;font-size:22px;color:#fff;font-style:italic;outline:none;}
+.sig-input:focus{border-bottom-color:var(--green-mid);}
+.sig-input::placeholder{color:rgba(255,255,255,0.2);}
+.success-screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:55vh;text-align:center;padding:40px 20px;}
+.success-icon{width:80px;height:80px;border-radius:50%;background:var(--green-light);border:2px solid var(--green);display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:20px;}
+.success-title{font-family:'DM Serif Display',serif;font-size:28px;color:var(--text);margin-bottom:8px;}
+.success-sub{font-size:14px;color:var(--muted);line-height:1.6;max-width:280px;}
+.success-time{font-size:12px;color:var(--green);margin-top:12px;font-weight:600;}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border2);padding:12px 20px;padding-bottom:max(12px,env(safe-area-inset-bottom));display:flex;gap:10px;z-index:100;}
+.url-info{background:var(--green-light);border:1px solid var(--green-mid);border-left:3px solid var(--green);border-radius:var(--r);padding:14px 16px;margin-bottom:16px;font-size:13px;color:#15803d;line-height:1.6;}
+.url-info strong{font-weight:700;display:block;margin-bottom:4px;}
+.url-info code{font-family:monospace;font-size:11px;word-break:break-all;background:rgba(22,163,74,0.08);padding:4px 6px;border-radius:4px;display:block;margin-top:6px;}
+.checkin-done-box{background:var(--green-light);border:1px solid var(--green-mid);border-radius:var(--r);padding:16px;text-align:center;margin-top:12px;}
+.checkin-done-time{font-family:'DM Serif Display',serif;font-size:22px;color:var(--green);margin:4px 0 2px;}
+.page{display:none;}
+.page.active{display:block;animation:slideUp 0.22s ease;}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 </style>
 </head>
 <body>
-
-<!-- NAV -->
-<nav id="top-nav">
-  <span class="nav-logo">agape</span>
-  <button class="nav-tab active" data-step="0">Job Details</button>
-  <button class="nav-tab locked" data-step="1">Check-In</button>
-  <button class="nav-tab locked" data-step="2">Living Room</button>
-  <button class="nav-tab locked" data-step="3">Kitchen</button>
-  <button class="nav-tab locked" data-step="4">Bedroom</button>
-  <button class="nav-tab locked" data-step="5">Bathroom</button>
-  <button class="nav-tab locked" data-step="6">Inventory</button>
-  <button class="nav-tab locked" data-step="7">Damage</button>
-  <button class="nav-tab locked" data-step="8">Submit</button>
-  <div class="nav-user">
-    <div class="nav-avatar" id="nav-avatar">?</div>
-    <span id="nav-name">Your name</span>
+<div class="app-header">
+  <div class="header-inner">
+    <img src="data:image/png;base64,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" alt="Agape Property Management" style="height:36px;width:auto;filter:invert(1) brightness(0.9);">
+    <div class="worker-badge"><div class="worker-avatar" id="workerInitials">—</div><div class="worker-name" id="workerNameDisplay">Your name</div></div>
   </div>
-</nav>
-
-<main id="main">
-
-  <!-- PAGE 0: JOB DETAILS -->
+  <div class="steps-nav">
+    <div class="step-pill active" id="pill-0" onclick="goToStep(0)">Job details</div>
+    <div class="step-pill" id="pill-1" onclick="goToStep(1)">Check-in</div>
+    <div class="step-pill" id="pill-2" onclick="goToStep(2)">Living room</div>
+    <div class="step-pill" id="pill-3" onclick="goToStep(3)">Kitchen</div>
+    <div class="step-pill" id="pill-4" onclick="goToStep(4)">Bedroom</div>
+    <div class="step-pill" id="pill-5" onclick="goToStep(5)">Bathroom</div>
+    <div class="step-pill" id="pill-6" onclick="goToStep(6)">Inventory</div>
+    <div class="step-pill" id="pill-7" onclick="goToStep(7)">Damage</div>
+    <div class="step-pill" id="pill-8" onclick="goToStep(8)">Submit</div>
+  </div>
+</div>
+<div class="content">
   <div class="page active" id="page-0">
-    <label class="field-label" for="worker-name">Your Name</label>
-    <input class="text-input" id="worker-name" type="text" placeholder="Enter your name to begin" autocomplete="name">
-
-    <div class="job-card" id="job-card">
-      <div class="job-card-badge" id="jc-type">Turnover Clean</div>
-      <div class="job-card-address" id="jc-address">124 Maple Drive</div>
-      <div class="job-card-city" id="jc-city">Dallas, TX 75201</div>
-      <div class="job-card-window">
-        <span>Window: <strong id="jc-window">11 AM – 3 PM</strong></span>
-        <span class="job-card-duration" id="jc-duration">4 hrs</span>
-      </div>
-      <div class="job-card-grid">
-        <div class="job-card-cell">
-          <div class="cell-label">Check-Out</div>
-          <div class="cell-value" id="jc-checkout">11:00 AM</div>
-        </div>
-        <div class="job-card-cell">
-          <div class="cell-label">Must Finish By</div>
-          <div class="cell-value green" id="jc-finish">3:00 PM</div>
-        </div>
-        <div class="job-card-cell">
-          <div class="cell-label">Property Type</div>
-          <div class="cell-value" id="jc-proptype">Airbnb</div>
-        </div>
-        <div class="job-card-cell">
-          <div class="cell-label">Size</div>
-          <div class="cell-value" id="jc-size">2 bed / 2 bath</div>
+    <div class="url-info">
+      <strong>How job links work — no new file needed per client</strong>
+      You send one link per job. The app reads the property details from the URL automatically:
+      <code>agape.app/job?address=124+Maple+Dr&city=Dallas+TX&type=Turnover+Clean&checkout=11:00AM&finish=3:00PM&beds=2bd/2ba&note1=Check+under+beds&note2=Use+lavender+spray</code>
+    </div>
+    <div style="margin-bottom:14px;">
+      <label class="field-label">Your name</label>
+      <input id="workerNameInput" type="text" placeholder="Enter your name to begin" style="width:100%;background:var(--surface);border:1.5px solid var(--border2);border-radius:var(--r-sm);padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);outline:none;transition:border 0.2s;" oninput="updateWorkerName(this.value)" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--border2)'">
+    </div>
+    <div class="job-card">
+      <div class="job-card-header">
+        <div class="job-type-badge" id="jobTypeBadge">Turnover Clean</div>
+        <div class="job-address" id="jobAddress">124 Maple Drive<span id="jobCity">Dallas, TX 75201</span></div>
+        <div class="urgency-row">
+          <span style="font-size:12px;color:rgba(255,255,255,0.4);">Window: <span id="timeWindow" style="color:#fff;">11 AM – 3 PM</span></span>
+          <span class="urgency-badge" id="urgencyBadge">4 hrs</span>
         </div>
       </div>
+      <div class="job-meta-grid">
+        <div class="job-meta-item"><div class="meta-label">Check-out</div><div class="meta-value" id="checkoutTime">11:00 AM</div></div>
+        <div class="job-meta-item"><div class="meta-label">Must finish by</div><div class="meta-value warn" id="finishBy">3:00 PM</div></div>
+        <div class="job-meta-item"><div class="meta-label">Property type</div><div class="meta-value" id="propType">Airbnb</div></div>
+        <div class="job-meta-item"><div class="meta-label">Size</div><div class="meta-value" id="bedrooms">2 bed / 2 bath</div></div>
+      </div>
     </div>
-
-    <div class="host-notes" id="host-notes-box">
-      <div class="host-notes-label">Host Notes</div>
-      <ul id="host-notes-list"></ul>
+    <div class="notes-card">
+      <div class="notes-card-label">Host notes</div>
+      <ul id="hostNotesList">
+        <li>Guest travelling with a pet — check under all beds</li>
+        <li>Use lavender spray on linens (under kitchen sink)</li>
+        <li>Restock coffee pods — extras in pantry top shelf</li>
+        <li>Do not disturb items in the locked storage room</li>
+      </ul>
     </div>
-
-    <div class="services-box" id="services-box">
-      <div class="services-label">Services Today</div>
-      <div class="chips" id="services-chips"></div>
+    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:14px 16px;">
+      <label class="field-label">Services today</label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;" id="servicesList">
+        <span style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:20px;background:var(--black);color:var(--green-mid);">Deep clean</span>
+        <span style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:20px;background:var(--surface2);color:var(--muted);">Fresh linens</span>
+        <span style="font-size:12px;font-weight:600;padding:5px 13px;border-radius:20px;background:var(--surface2);color:var(--muted);">Restock</span>
+      </div>
     </div>
   </div>
 
-  <!-- PAGE 1: CHECK-IN -->
   <div class="page" id="page-1">
-    <div class="clock-card">
-      <div class="clock-label">Current Time</div>
-      <div class="clock-time" id="clock-display">--:-- --</div>
-      <div class="clock-date" id="clock-date"></div>
-      <div class="clock-gps" id="gps-status">Acquiring GPS...</div>
+    <div class="checkin-card">
+      <div style="font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:0.12em;text-transform:uppercase;">Current time</div>
+      <div class="checkin-time" id="clockDisplay">--:--</div>
+      <div class="checkin-date" id="dateDisplay">—</div>
+      <div class="checkin-status"><div class="dot-pulse" id="gpsDot" style="background:var(--gold);"></div><span id="gpsText" style="color:rgba(255,255,255,0.5);font-size:13px;">Acquiring GPS…</span></div>
+      <div class="gps-coords" id="gpsCoords" style="margin-top:4px;"></div>
     </div>
-    <button class="btn-checkin" id="checkin-btn" onclick="doCheckIn()">Check In Now</button>
-    <div style="margin-top: 16px; text-align:center;">
-      <span style="font-size:13px; color:var(--gray-400);">Having trouble? GPS will retry automatically.</span>
+    <div id="checkinBtnWrap"><button class="big-btn btn-green" id="checkinBtn" onclick="doCheckin()" disabled>Acquiring location…</button></div>
+    <div id="checkinDoneBox" style="display:none;" class="checkin-done-box">
+      <div style="font-size:11px;font-weight:700;color:var(--green);letter-spacing:0.08em;text-transform:uppercase;">Checked in</div>
+      <div class="checkin-done-time" id="checkinRecordedTime">—</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px;" id="checkinRecordedAddr">—</div>
     </div>
   </div>
 
-  <!-- PAGE 2: LIVING ROOM -->
   <div class="page" id="page-2">
-    <div class="section-header">
-      <div class="section-header-left">
-        <div class="section-icon">🛋️</div>
-        <div class="section-title">Living Room</div>
-      </div>
-      <div class="section-count" id="lr-count">0/6</div>
+    <div class="section-header"><div class="section-icon">🛋</div><div class="section-title">Living room</div><div class="section-badge" id="sbadge-2">0/6</div></div>
+    <div class="progress-wrap"><div class="progress-fill" id="prog-2" style="width:0%"></div></div>
+    <div class="progress-label" id="plabel-2">0 of 6 complete</div>
+    <div class="task-list" id="tasks-2">
+      <div class="task-item" onclick="toggleTask(this,2)"><div class="task-check-box"></div><div class="task-text">Vacuum and mop all floors</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
+      <div class="task-item" onclick="toggleTask(this,2)"><div class="task-check-box"></div><div class="task-text">Wipe surfaces, shelves and TV screen</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
+      <div class="task-item" onclick="toggleTask(this,2)"><div class="task-check-box"></div><div class="task-text">Fluff pillows and arrange throws</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
+      <div class="task-item" onclick="toggleTask(this,2)"><div class="task-check-box"></div><div class="task-text">Wipe remotes and electronics</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
+      <div class="task-item" onclick="toggleTask(this,2)"><div class="task-check-box"></div><div class="task-text">Empty trash and replace liner</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
+      <div class="task-item" onclick="toggleTask(this,2)"><div class="task-check-box"></div><div class="task-text">Check for damage or left-behind items</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
     </div>
-    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="lr-bar" style="width:0%"></div></div>
-    <div class="progress-label" id="lr-prog">0 of 6 complete</div>
-    <div class="checklist" id="lr-list"></div>
-    <label class="sub-label">Room Notes</label>
-    <textarea class="room-notes" id="lr-notes" placeholder="Issues or observations..."></textarea>
-    <div class="photo-section">
-      <div class="photo-count-label">Photos (<span class="count" id="lr-photo-count">0</span>)</div>
-      <div class="photo-grid" id="lr-photos">
-        <div class="photo-add" onclick="triggerPhoto('lr')">
-          <span class="photo-add-icon">+</span>
-          <span>Add photo</span>
-        </div>
-      </div>
-      <input type="file" accept="image/*" capture="environment" class="hidden-file" id="file-lr" onchange="handlePhoto(event,'lr')">
-    </div>
+    <label class="field-label">Room notes</label>
+    <textarea class="notes-input" placeholder="Issues or observations…" id="notes-2"></textarea>
+    <label class="field-label">Photos <span id="pcount-2" style="color:var(--green);font-weight:700;">(0)</span></label>
+    <div class="photo-grid" id="pgrid-2"><label class="photo-add-btn"><div class="photo-add-icon">+</div><div class="photo-add-text">Add photo</div><input type="file" accept="image/*" multiple capture="environment" style="display:none" onchange="addPhotos(this,2)"></label></div>
   </div>
 
-  <!-- PAGE 3: KITCHEN -->
   <div class="page" id="page-3">
-    <div class="section-header">
-      <div class="section-header-left">
-        <div class="section-icon">🍳</div>
-        <div class="section-title">Kitchen</div>
-      </div>
-      <div class="section-count" id="kt-count">0/8</div>
+    <div class="section-header"><div class="section-icon">🍳</div><div class="section-title">Kitchen</div><div class="section-badge" id="sbadge-3">0/8</div></div>
+    <div class="progress-wrap"><div class="progress-fill" id="prog-3" style="width:0%"></div></div>
+    <div class="progress-label" id="plabel-3">0 of 8 complete</div>
+    <div class="task-list" id="tasks-3">
+      <div class="task-item" onclick="toggleTask(this,3)"><div class="task-check-box"></div><div class="task-text">Clean stovetop, oven exterior and knobs</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
+      <div class="task-item" onclick="toggleTask(this,3)"><div class="task-check-box"></div><div class="task-text">Wipe countertops and backsplash</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
+      <div class="task-item" onclick="toggleTask(this,3)"><div class="task-check-box"></div><div class="task-text">Clean sink, faucet and disposal</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
+      <div class="task-item" onclick="toggleTask(this,3)"><div class="task-check-box"></div><div class="task-text">Wipe microwave inside and out</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
+      <div class="task-item" onclick="toggleTask(this,3)"><div class="task-check-box"></div><div class="task-text">Clean fridge and dishwasher exterior</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
+      <div class="task-item" onclick="toggleTask(this,3)"><div class="task-check-box"></div><div class="task-text">Run or unload dishwasher, put away</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
+      <div class="task-item" onclick="toggleTask(this,3)"><div class="task-check-box"></div><div class="task-text">Sweep and mop floor</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
+      <div class="task-item" onclick="toggleTask(this,3)"><div class="task-check-box"></div><div class="task-text">Empty trash and replace liner</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
     </div>
-    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="kt-bar" style="width:0%"></div></div>
-    <div class="progress-label" id="kt-prog">0 of 8 complete</div>
-    <div class="checklist" id="kt-list"></div>
-    <label class="sub-label">Room Notes</label>
-    <textarea class="room-notes" id="kt-notes" placeholder="Issues or observations..."></textarea>
-    <div class="photo-section">
-      <div class="photo-count-label">Photos (<span class="count" id="kt-photo-count">0</span>)</div>
-      <div class="photo-grid" id="kt-photos">
-        <div class="photo-add" onclick="triggerPhoto('kt')">
-          <span class="photo-add-icon">+</span>
-          <span>Add photo</span>
-        </div>
-      </div>
-      <input type="file" accept="image/*" capture="environment" class="hidden-file" id="file-kt" onchange="handlePhoto(event,'kt')">
-    </div>
+    <label class="field-label">Room notes</label>
+    <textarea class="notes-input" placeholder="Issues or observations…" id="notes-3"></textarea>
+    <label class="field-label">Photos <span id="pcount-3" style="color:var(--green);font-weight:700;">(0)</span></label>
+    <div class="photo-grid" id="pgrid-3"><label class="photo-add-btn"><div class="photo-add-icon">+</div><div class="photo-add-text">Add photo</div><input type="file" accept="image/*" multiple capture="environment" style="display:none" onchange="addPhotos(this,3)"></label></div>
   </div>
 
-  <!-- PAGE 4: BEDROOM -->
   <div class="page" id="page-4">
-    <div class="section-header">
-      <div class="section-header-left">
-        <div class="section-icon">🛏️</div>
-        <div class="section-title">Bedroom</div>
-      </div>
-      <div class="section-count" id="bd-count">0/6</div>
+    <div class="section-header"><div class="section-icon">🛏</div><div class="section-title">Bedroom</div><div class="section-badge" id="sbadge-4">0/6</div></div>
+    <div class="progress-wrap"><div class="progress-fill" id="prog-4" style="width:0%"></div></div>
+    <div class="progress-label" id="plabel-4">0 of 6 complete</div>
+    <div class="task-list" id="tasks-4">
+      <div class="task-item" onclick="toggleTask(this,4)"><div class="task-check-box"></div><div class="task-text">Make bed with fresh linens (hotel style)</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
+      <div class="task-item" onclick="toggleTask(this,4)"><div class="task-check-box"></div><div class="task-text">Fluff and arrange all pillows</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
+      <div class="task-item" onclick="toggleTask(this,4)"><div class="task-check-box"></div><div class="task-text">Vacuum floor including under bed</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
+      <div class="task-item" onclick="toggleTask(this,4)"><div class="task-check-box"></div><div class="task-text">Wipe nightstands, lamps and surfaces</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
+      <div class="task-item" onclick="toggleTask(this,4)"><div class="task-check-box"></div><div class="task-text">Check wardrobe and drawers are empty and clean</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
+      <div class="task-item" onclick="toggleTask(this,4)"><div class="task-check-box"></div><div class="task-text">Verify hangers are stocked</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
     </div>
-    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="bd-bar" style="width:0%"></div></div>
-    <div class="progress-label" id="bd-prog">0 of 6 complete</div>
-    <div class="checklist" id="bd-list"></div>
-    <label class="sub-label">Room Notes</label>
-    <textarea class="room-notes" id="bd-notes" placeholder="Issues or observations..."></textarea>
-    <div class="photo-section">
-      <div class="photo-count-label">Photos (<span class="count" id="bd-photo-count">0</span>)</div>
-      <div class="photo-grid" id="bd-photos">
-        <div class="photo-add" onclick="triggerPhoto('bd')">
-          <span class="photo-add-icon">+</span>
-          <span>Add photo</span>
-        </div>
-      </div>
-      <input type="file" accept="image/*" capture="environment" class="hidden-file" id="file-bd" onchange="handlePhoto(event,'bd')">
-    </div>
+    <label class="field-label">Room notes</label>
+    <textarea class="notes-input" placeholder="Issues or observations…" id="notes-4"></textarea>
+    <label class="field-label">Photos <span id="pcount-4" style="color:var(--green);font-weight:700;">(0)</span></label>
+    <div class="photo-grid" id="pgrid-4"><label class="photo-add-btn"><div class="photo-add-icon">+</div><div class="photo-add-text">Add photo</div><input type="file" accept="image/*" multiple capture="environment" style="display:none" onchange="addPhotos(this,4)"></label></div>
   </div>
 
-  <!-- PAGE 5: BATHROOM -->
   <div class="page" id="page-5">
-    <div class="section-header">
-      <div class="section-header-left">
-        <div class="section-icon">🚿</div>
-        <div class="section-title">Bathroom</div>
-      </div>
-      <div class="section-count" id="bt-count">0/7</div>
+    <div class="section-header"><div class="section-icon">🚿</div><div class="section-title">Bathroom</div><div class="section-badge" id="sbadge-5">0/7</div></div>
+    <div class="progress-wrap"><div class="progress-fill" id="prog-5" style="width:0%"></div></div>
+    <div class="progress-label" id="plabel-5">0 of 7 complete</div>
+    <div class="task-list" id="tasks-5">
+      <div class="task-item" onclick="toggleTask(this,5)"><div class="task-check-box"></div><div class="task-text">Scrub toilet inside and out</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
+      <div class="task-item" onclick="toggleTask(this,5)"><div class="task-check-box"></div><div class="task-text">Clean sink, faucet and mirror</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
+      <div class="task-item" onclick="toggleTask(this,5)"><div class="task-check-box"></div><div class="task-text">Scrub shower/tub and clean glass door</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
+      <div class="task-item" onclick="toggleTask(this,5)"><div class="task-check-box"></div><div class="task-text">Replace and fold fresh towels</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
+      <div class="task-item" onclick="toggleTask(this,5)"><div class="task-check-box"></div><div class="task-text">Restock toiletries and toilet paper</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
+      <div class="task-item" onclick="toggleTask(this,5)"><div class="task-check-box"></div><div class="task-text">Sweep and mop floor</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
+      <div class="task-item" onclick="toggleTask(this,5)"><div class="task-check-box"></div><div class="task-text">Empty trash and replace liner</div><button class="task-na-btn" onclick="toggleNA(event,this)">N/A</button></div>
     </div>
-    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="bt-bar" style="width:0%"></div></div>
-    <div class="progress-label" id="bt-prog">0 of 7 complete</div>
-    <div class="checklist" id="bt-list"></div>
-    <label class="sub-label">Room Notes</label>
-    <textarea class="room-notes" id="bt-notes" placeholder="Issues or observations..."></textarea>
-    <div class="photo-section">
-      <div class="photo-count-label">Photos (<span class="count" id="bt-photo-count">0</span>)</div>
-      <div class="photo-grid" id="bt-photos">
-        <div class="photo-add" onclick="triggerPhoto('bt')">
-          <span class="photo-add-icon">+</span>
-          <span>Add photo</span>
-        </div>
-      </div>
-      <input type="file" accept="image/*" capture="environment" class="hidden-file" id="file-bt" onchange="handlePhoto(event,'bt')">
-    </div>
+    <label class="field-label">Room notes</label>
+    <textarea class="notes-input" placeholder="Issues or observations…" id="notes-5"></textarea>
+    <label class="field-label">Photos <span id="pcount-5" style="color:var(--green);font-weight:700;">(0)</span></label>
+    <div class="photo-grid" id="pgrid-5"><label class="photo-add-btn"><div class="photo-add-icon">+</div><div class="photo-add-text">Add photo</div><input type="file" accept="image/*" multiple capture="environment" style="display:none" onchange="addPhotos(this,5)"></label></div>
   </div>
 
-  <!-- PAGE 6: INVENTORY -->
   <div class="page" id="page-6">
-    <div class="section-header">
-      <div class="section-header-left">
-        <div class="section-icon">📦</div>
-        <div class="section-title">Inventory</div>
-      </div>
-      <div class="section-count" id="inv-count">0/12</div>
-    </div>
-    <p class="page-subtitle">Tap the status for each item. Flag anything Low or Out so the host can reorder.</p>
-    <div class="inv-list" id="inv-list"></div>
+    <div class="section-header"><div class="section-icon">📦</div><div class="section-title">Inventory</div><div class="section-badge" id="sbadge-6">0/12</div></div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.5;">Tap the status for each item. Flag anything Low or Out so the host can reorder.</p>
+    <div class="inv-card" id="invCard"></div>
   </div>
 
-  <!-- PAGE 7: DAMAGE -->
   <div class="page" id="page-7">
-    <div class="damage-header">
-      <div class="damage-header-icon">⚠️</div>
-      <div class="section-title">Damage Report</div>
+    <div class="section-header"><div class="section-icon" style="background:#fee2e2;font-size:16px;">⚠</div><div class="section-title">Damage report</div></div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.5;">Document any damage or broken items. Photos required for every damage report.</p>
+    <div id="damageItems">
+      <div class="damage-card"><div class="damage-label">Damage item 1</div><textarea class="damage-input" placeholder="Location, severity, likely cause…" rows="3"></textarea></div>
     </div>
-    <p class="page-subtitle">Document any damage or broken items. Photos required for every damage report.</p>
-    <div id="damage-items-wrap"></div>
-    <button class="btn-add-damage" onclick="addDamageItem()">+ Add another item</button>
-    <span class="damage-photos-label">Damage Photos (<span id="dmg-photo-count">0</span>)</span>
-    <div class="photo-grid" id="dmg-photos">
-      <div class="photo-add" onclick="triggerPhoto('dmg')">
-        <span class="photo-add-icon">+</span>
-        <span>Add photo</span>
-      </div>
-    </div>
-    <input type="file" accept="image/*" capture="environment" class="hidden-file" id="file-dmg" onchange="handlePhoto(event,'dmg')">
-    <p class="no-damage-hint">No damage? Tap Next to go to Submit.</p>
+    <button class="add-damage-btn" onclick="addDamageItem()">+ Add another item</button>
+    <label class="field-label">Damage photos <span id="pcount-7" style="color:var(--red);font-weight:700;">(0)</span></label>
+    <div class="photo-grid" id="pgrid-7"><label class="photo-add-btn" style="border-color:#fca5a5;"><div class="photo-add-icon" style="color:var(--red);">+</div><div class="photo-add-text" style="color:var(--red);">Add photo</div><input type="file" accept="image/*" multiple capture="environment" style="display:none" onchange="addPhotos(this,7)"></label></div>
+    <p style="font-size:12px;color:var(--muted);margin-top:16px;">No damage? Tap Next to go to Submit.</p>
   </div>
 
-  <!-- PAGE 8: SUBMIT -->
   <div class="page" id="page-8">
-    <div class="submit-header">
-      <div class="submit-icon">✓</div>
-      <div class="submit-title">Submit Report</div>
-    </div>
-
-    <div class="progress-bar-wrap" style="margin-bottom:6px">
-      <div class="progress-bar-fill" id="submit-bar" style="width:0%"></div>
-    </div>
-    <div class="progress-label" id="submit-task-label">0 of 27 tasks complete (0%)</div>
-
-    <div class="stats-card">
-      <div class="stat-cell">
-        <div class="stat-value" id="stat-tasks">0</div>
-        <div class="stat-label">Tasks Done</div>
+    <div class="section-header"><div class="section-icon" style="background:var(--green);color:#fff;font-size:16px;">✓</div><div class="section-title">Submit report</div></div>
+    <div class="progress-wrap" style="margin-bottom:4px;"><div class="progress-fill" id="overall-prog" style="width:0%"></div></div>
+    <div class="progress-label" id="overall-label">Calculating…</div>
+    <div class="submit-card">
+      <div class="submit-summary">
+        <div class="sum-box"><div class="sum-num" id="sum-done">0</div><div class="sum-lbl">Tasks done</div></div>
+        <div class="sum-box"><div class="sum-num" id="sum-photos">0</div><div class="sum-lbl">Photos</div></div>
+        <div class="sum-box"><div class="sum-num" id="sum-time">—</div><div class="sum-lbl">On-site</div></div>
       </div>
-      <div class="stat-cell">
-        <div class="stat-value" id="stat-photos">0</div>
-        <div class="stat-label">Photos</div>
+      <div class="sig-label">Overall condition</div>
+      <div class="cond-btns" id="condBtns">
+        <button class="cond-btn" onclick="setCond(this,'ok')">Excellent</button>
+        <button class="cond-btn" onclick="setCond(this,'ok')">Good</button>
+        <button class="cond-btn" onclick="setCond(this,'warn')">Fair</button>
+        <button class="cond-btn" onclick="setCond(this,'bad')">Needs attention</button>
       </div>
-      <div class="stat-cell">
-        <div class="stat-value dash" id="stat-onsite">—</div>
-        <div class="stat-label">On-Site</div>
-      </div>
+      <div class="sig-label" style="color:rgba(255,255,255,0.4);margin-bottom:6px;">Final notes to host</div>
+      <textarea class="notes-input" placeholder="Anything else the host should know…" id="finalNotes" style="background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.12);color:#fff;margin-bottom:16px;"></textarea>
+      <div class="sig-label">Your signature</div>
+      <input class="sig-input" type="text" placeholder="Sign your name" id="sigInput">
     </div>
-
-    <div class="condition-section">
-      <span class="sub-label">Overall Condition</span>
-      <div class="condition-btns">
-        <button class="cond-btn" onclick="setCondition('Excellent')">Excellent</button>
-        <button class="cond-btn" onclick="setCondition('Good')">Good</button>
-        <button class="cond-btn" onclick="setCondition('Fair')">Fair</button>
-        <button class="cond-btn" onclick="setCondition('Needs attention')">Needs attention</button>
-      </div>
+    <button class="big-btn btn-green" id="submitBtn" onclick="submitReport()" style="margin-bottom:16px;">Submit to Agape Property Management</button>
+    <div class="success-screen" id="successScreen">
+      <div class="success-icon">✓</div>
+      <div class="success-title">Report submitted</div>
+      <div class="success-sub">Your report has been sent to the host and Agape Property Management. Great work.</div>
+      <div class="success-time" id="successTime">Submitted at —</div>
     </div>
-
-    <label class="sub-label">Final Notes to Host</label>
-    <textarea class="room-notes" id="final-notes" placeholder="Anything else the host should know..." style="min-height:110px;margin-bottom:20px"></textarea>
-
-    <label class="sub-label">Your Signature</label>
-    <div class="sig-wrap">
-      <input class="sig-input" id="sig-input" type="text" placeholder="Sign your name">
-    </div>
-
-    <button class="btn-submit-final" id="submit-btn" onclick="submitReport()">
-      Submit to Agape Property Management
-    </button>
   </div>
-
-</main>
-
-<!-- BOTTOM BAR -->
-<div id="bottom-bar">
-  <button class="btn-back" id="btn-back" onclick="goBack()" style="display:none">← Back</button>
-  <button class="btn-next" id="btn-next" onclick="goNext()">Next</button>
 </div>
 
-<!-- TOAST -->
-<div id="toast"></div>
-
-<!-- SUCCESS -->
-<div id="success-screen">
-  <div class="success-icon">✅</div>
-  <div class="success-title">Report Submitted</div>
-  <p class="success-sub">Your cleaning report has been sent to Agape Property Management. Great work today!</p>
+<div class="bottom-nav" id="bottomNav">
+  <button class="big-btn btn-ghost" id="prevBtn" onclick="prevStep()" style="flex:1;padding:14px;">Back</button>
+  <button class="big-btn btn-primary" id="nextBtn" onclick="nextStep()" style="flex:2;padding:14px;">Next</button>
 </div>
 
 <script>
-// ─────────────────────────────────────────────
-// DATA DEFINITIONS
-// ─────────────────────────────────────────────
-const ROOMS = {
-  lr: {
-    tasks: [
-      'Vacuum and mop all floors',
-      'Wipe surfaces, shelves and TV screen',
-      'Fluff pillows and arrange throws',
-      'Wipe remotes and electronics',
-      'Empty trash and replace liner',
-      'Check for damage or left-behind items',
-    ]
-  },
-  kt: {
-    tasks: [
-      'Clean stovetop, oven exterior and knobs',
-      'Wipe countertops and backsplash',
-      'Clean sink, faucet and disposal',
-      'Wipe microwave inside and out',
-      'Clean fridge and dishwasher exterior',
-      'Run or unload dishwasher, put away',
-      'Sweep and mop floor',
-      'Empty trash and replace liner',
-    ]
-  },
-  bd: {
-    tasks: [
-      'Make bed with fresh linens (hotel style)',
-      'Fluff and arrange all pillows',
-      'Vacuum floor including under bed',
-      'Wipe nightstands, lamps and surfaces',
-      'Check wardrobe and drawers are empty and clean',
-      'Verify hangers are stocked',
-    ]
-  },
-  bt: {
-    tasks: [
-      'Scrub toilet inside and out',
-      'Clean sink, faucet and mirror',
-      'Scrub shower/tub and clean glass door',
-      'Replace and fold fresh towels',
-      'Restock toiletries and toilet paper',
-      'Sweep and mop floor',
-      'Empty trash and replace liner',
-    ]
-  }
-};
+let currentStep=0;
+const taskCounts={2:6,3:8,4:6,5:7};
+const taskDone={2:0,3:0,4:0,5:0};
+const taskNA={2:0,3:0,4:0,5:0};
+const photoCounts={2:0,3:0,4:0,5:0,7:0};
+let totalPhotos=0,checkinTime=null,checkinDone=false;
+const invItems=['Toilet paper','Paper towels','Hand soap','Dish soap','Shampoo / conditioner','Body wash','Trash bags','Coffee and tea','Extra towels','Extra linens','Dishwasher pods','Batteries (remote)'];
+const invState={};
 
-const INVENTORY_ITEMS = [
-  'Toilet paper','Paper towels','Hand soap','Dish soap',
-  'Shampoo / conditioner','Body wash','Trash bags',
-  'Coffee and tea','Extra towels','Extra linens',
-  'Dishwasher pods','Batteries (remote)'
-];
-
-const ROOM_IDS = ['lr','kt','bd','bt'];
-const ROOM_STEP = { lr:2, kt:3, bd:4, bt:5 };
-
-// ─────────────────────────────────────────────
-// STATE
-// ─────────────────────────────────────────────
-let currentStep = 0;
-let jobId = '';
-let jobData = {};
-let state = {};
-
-function defaultState() {
-  return {
-    workerName: '',
-    checkedIn: false,
-    checkInTime: null,
-    checkInCoords: null,
-    lr: { tasks: {}, notes: '', photos: [] },
-    kt: { tasks: {}, notes: '', photos: [] },
-    bd: { tasks: {}, notes: '', photos: [] },
-    bt: { tasks: {}, notes: '', photos: [] },
-    inventory: {},
-    damage: { items: [''], photos: [] },
-    condition: '',
-    finalNotes: '',
-    signature: '',
-    submitted: false,
-  };
+// ── STORAGE KEY ─────────────────────────────────────────────
+function storageKey(){
+  const jobId=new URLSearchParams(window.location.search).get('jobId')||'no-job';
+  return 'agape_job_'+jobId;
 }
 
-// ─────────────────────────────────────────────
-// PERSISTENCE
-// ─────────────────────────────────────────────
-function saveState() {
-  const key = 'agape_job_' + (jobId || 'default');
-  localStorage.setItem(key, JSON.stringify(state));
-}
-
-function loadState() {
-  const key = 'agape_job_' + (jobId || 'default');
-  const saved = localStorage.getItem(key);
-  if (saved) {
-    try {
-      state = { ...defaultState(), ...JSON.parse(saved) };
-      return true;
-    } catch(e) {}
-  }
-  state = defaultState();
-  return false;
-}
-
-// ─────────────────────────────────────────────
-// URL PARAMS → JOB DATA
-// ─────────────────────────────────────────────
-function parseJobFromURL() {
-  const p = new URLSearchParams(window.location.search);
-  jobId = p.get('jobId') || p.get('id') || 'demo';
-
-  // Build job details (fall back to demo data)
-  jobData = {
-    address:  p.get('address')  || '124 Maple Drive',
-    city:     p.get('city')     || 'Dallas, TX 75201',
-    type:     p.get('type')     || 'Turnover Clean',
-    checkout: p.get('checkout') || '11:00 AM',
-    finish:   p.get('finish')   || '3:00 PM',
-    beds:     p.get('beds')     || '2 bed / 2 bath',
-    proptype: p.get('proptype') || 'Airbnb',
-    window:   p.get('window')   || '11 AM – 3 PM',
-    duration: p.get('duration') || '4 hrs',
-    services: (p.get('services') || 'Deep clean,Fresh linens,Restock').split(','),
-    notes:    [],
-  };
-
-  // Extra notes e1, e2, e3…
-  for (let i = 1; i <= 10; i++) {
-    const note = p.get('e' + i);
-    if (note) jobData.notes.push(note);
-  }
-  if (!jobData.notes.length) {
-    jobData.notes = [
-      'Guest travelling with a pet — check under all beds',
-      'Use lavender spray on linens (under kitchen sink)',
-      'Restock coffee pods — extras in pantry top shelf',
-      'Do not disturb items in the locked storage room',
-    ];
-  }
-}
-
-// ─────────────────────────────────────────────
-// RENDER JOB CARD
-// ─────────────────────────────────────────────
-function renderJobCard() {
-  document.getElementById('jc-type').textContent    = jobData.type;
-  document.getElementById('jc-address').textContent = jobData.address;
-  document.getElementById('jc-city').textContent    = jobData.city;
-  document.getElementById('jc-window').textContent  = jobData.window;
-  document.getElementById('jc-duration').textContent= jobData.duration;
-  document.getElementById('jc-checkout').textContent= jobData.checkout;
-  document.getElementById('jc-finish').textContent  = jobData.finish;
-  document.getElementById('jc-proptype').textContent= jobData.proptype;
-  document.getElementById('jc-size').textContent    = jobData.beds;
-
-  // Notes
-  const ul = document.getElementById('host-notes-list');
-  ul.innerHTML = jobData.notes.map(n => `<li>${n}</li>`).join('');
-
-  // Services
-  const chips = document.getElementById('services-chips');
-  chips.innerHTML = jobData.services.map((s,i) =>
-    `<span class="chip ${i===0?'primary':''}">${s.trim()}</span>`
-  ).join('');
-
-  // Sample URL
-  document.getElementById('sample-url').textContent =
-    `agape.app/job?address=${jobData.address.replace(/ /g,'+')}&city=${jobData.city.replace(/ /g,'+')}&type=${jobData.type.replace(/ /g,'+')}...`;
-}
-
-// ─────────────────────────────────────────────
-// RENDER CHECKLISTS
-// ─────────────────────────────────────────────
-function renderChecklist(roomId) {
-  const tasks = ROOMS[roomId].tasks;
-  const el = document.getElementById(roomId + '-list');
-  el.innerHTML = tasks.map((t, i) => {
-    const checked   = state[roomId].tasks[i] === 'done';
-    const isNA      = state[roomId].tasks[i] === 'na';
-    const checkCls  = checked ? 'checked' : '';
-    const naCls     = isNA    ? 'active'  : '';
-    return `
-      <div class="check-item ${checkCls}" id="${roomId}-item-${i}">
-        <div class="check-box ${checkCls}" onclick="toggleTask('${roomId}',${i})">${checked ? '✓' : ''}</div>
-        <span class="check-text">${t}</span>
-        <button class="na-btn ${naCls}" onclick="toggleNA('${roomId}',${i})">N/A</button>
-      </div>`;
-  }).join('');
-  updateRoomProgress(roomId);
-}
-
-function toggleTask(roomId, i) {
-  const cur = state[roomId].tasks[i];
-  state[roomId].tasks[i] = cur === 'done' ? '' : 'done';
-  saveState();
-  renderChecklist(roomId);
-}
-
-function toggleNA(roomId, i) {
-  const cur = state[roomId].tasks[i];
-  state[roomId].tasks[i] = cur === 'na' ? '' : 'na';
-  saveState();
-  renderChecklist(roomId);
-}
-
-function updateRoomProgress(roomId) {
-  const tasks  = ROOMS[roomId].tasks;
-  const done   = tasks.filter((_,i) =>
-    state[roomId].tasks[i] === 'done' || state[roomId].tasks[i] === 'na'
-  ).length;
-  const total  = tasks.length;
-  const pct    = Math.round(done/total*100);
-
-  document.getElementById(roomId + '-count').textContent = `${done}/${total}`;
-  document.getElementById(roomId + '-bar').style.width   = pct + '%';
-  document.getElementById(roomId + '-prog').textContent  = `${done} of ${total} complete`;
-}
-
-// ─────────────────────────────────────────────
-// RENDER INVENTORY
-// ─────────────────────────────────────────────
-function renderInventory() {
-  const el = document.getElementById('inv-list');
-  el.innerHTML = INVENTORY_ITEMS.map((item, i) => {
-    const val = state.inventory[i] || '';
-    return `
-      <div class="inv-item">
-        <span class="inv-name">${item}</span>
-        <div class="inv-btns">
-          <button class="inv-btn ok  ${val==='ok'  ?'active':''}" onclick="setInv(${i},'ok')" >OK</button>
-          <button class="inv-btn low ${val==='low' ?'active':''}" onclick="setInv(${i},'low')">Low</button>
-          <button class="inv-btn out ${val==='out' ?'active':''}" onclick="setInv(${i},'out')">Out</button>
-        </div>
-      </div>`;
-  }).join('');
-  updateInvCount();
-}
-
-function setInv(i, val) {
-  state.inventory[i] = state.inventory[i] === val ? '' : val;
-  saveState();
-  renderInventory();
-}
-
-function updateInvCount() {
-  const done = Object.values(state.inventory).filter(Boolean).length;
-  document.getElementById('inv-count').textContent = `${done}/12`;
-}
-
-// ─────────────────────────────────────────────
-// DAMAGE
-// ─────────────────────────────────────────────
-function renderDamage() {
-  const wrap = document.getElementById('damage-items-wrap');
-  wrap.innerHTML = state.damage.items.map((text, i) => `
-    <div class="damage-item-card">
-      <div class="damage-item-label">Damage Item ${i+1}</div>
-      <textarea class="damage-textarea" 
-        placeholder="Location, severity, likely cause..."
-        oninput="updateDamageText(${i}, this.value)">${text}</textarea>
-    </div>
-  `).join('');
-}
-
-function addDamageItem() {
-  state.damage.items.push('');
-  saveState();
-  renderDamage();
-}
-
-function updateDamageText(i, val) {
-  state.damage.items[i] = val;
-  saveState();
-}
-
-// ─────────────────────────────────────────────
-// PHOTOS (stored as base64 in localStorage)
-// ─────────────────────────────────────────────
-function triggerPhoto(roomId) {
-  document.getElementById('file-' + roomId).click();
-}
-
-function handlePhoto(event, roomId) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const b64 = e.target.result;
-    if (roomId === 'dmg') {
-      state.damage.photos.push(b64);
-    } else {
-      state[roomId].photos.push(b64);
-    }
-    saveState();
-    renderPhotos(roomId);
-  };
-  reader.readAsDataURL(file);
-  event.target.value = ''; // reset
-}
-
-function renderPhotos(roomId) {
-  const photos = roomId === 'dmg' ? state.damage.photos : state[roomId].photos;
-  const gridId = roomId === 'dmg' ? 'dmg-photos' : roomId + '-photos';
-  const countId = roomId === 'dmg' ? 'dmg-photo-count' : roomId + '-photo-count';
-  const grid = document.getElementById(gridId);
-
-  // Rebuild
-  const thumbs = photos.map((src, i) => `
-    <div style="position:relative;display:inline-block">
-      <img src="${src}" class="photo-thumb" alt="photo">
-      <button onclick="removePhoto('${roomId}',${i})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#111;color:white;border:none;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">×</button>
-    </div>
-  `).join('');
-
-  grid.innerHTML = thumbs + `
-    <div class="photo-add" onclick="triggerPhoto('${roomId}')">
-      <span class="photo-add-icon">+</span>
-      <span>Add photo</span>
-    </div>`;
-
-  document.getElementById(countId).textContent = photos.length;
-}
-
-function removePhoto(roomId, i) {
-  if (roomId === 'dmg') {
-    state.damage.photos.splice(i, 1);
-  } else {
-    state[roomId].photos.splice(i, 1);
-  }
-  saveState();
-  renderPhotos(roomId);
-}
-
-// ─────────────────────────────────────────────
-// CHECK-IN / CLOCK
-// ─────────────────────────────────────────────
-let clockInterval;
-let gpsCoords = null;
-
-function startClock() {
-  const updateClock = () => {
-    const now = new Date();
-    const h = now.getHours();
-    const m = now.getMinutes().toString().padStart(2,'0');
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    const h12 = (h % 12 || 12).toString().padStart(2,'0');
-    document.getElementById('clock-display').textContent = `${h12}:${m} ${ampm}`;
-    document.getElementById('clock-date').textContent = now.toLocaleDateString('en-US', {
-      weekday:'long', month:'long', day:'numeric'
-    });
-  };
-  updateClock();
-  clockInterval = setInterval(updateClock, 1000);
-}
-
-function getGPS() {
-  if (!navigator.geolocation) {
-    document.getElementById('gps-status').textContent = 'GPS not available on this device';
-    return;
-  }
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      gpsCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-      const el = document.getElementById('gps-status');
-      el.textContent = `📍 GPS locked (${gpsCoords.lat.toFixed(4)}, ${gpsCoords.lng.toFixed(4)})`;
-      el.classList.add('got');
-    },
-    () => {
-      document.getElementById('gps-status').textContent = 'GPS unavailable — check in manually';
-      document.getElementById('checkin-btn').textContent = 'GPS unavailable — check in manually';
-    },
-    { timeout: 8000 }
-  );
-}
-
-function doCheckIn() {
-  if (state.checkedIn) return;
-  const now = new Date();
-  state.checkedIn = true;
-  state.checkInTime = now.toISOString();
-  state.checkInCoords = gpsCoords;
-  saveState();
-
-  const btn = document.getElementById('checkin-btn');
-  btn.classList.add('done');
-  btn.innerHTML = `✓ Checked in at ${now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}`;
-
-  showToast('Checked in! ✓', 'green');
-}
-
-function updateCheckInUI() {
-  if (state.checkedIn) {
-    const t = new Date(state.checkInTime);
-    const btn = document.getElementById('checkin-btn');
-    btn.classList.add('done');
-    btn.innerHTML = `✓ Checked in at ${t.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}`;
-  }
-}
-
-// ─────────────────────────────────────────────
-// SUBMIT PAGE STATS
-// ─────────────────────────────────────────────
-function updateSubmitStats() {
-  let totalTasks = 0, doneTasks = 0, totalPhotos = 0;
-  ROOM_IDS.forEach(r => {
-    const tasks = ROOMS[r].tasks;
-    totalTasks += tasks.length;
-    doneTasks  += tasks.filter((_,i) =>
-      state[r].tasks[i] === 'done' || state[r].tasks[i] === 'na'
-    ).length;
-    totalPhotos += state[r].photos.length;
-  });
-  totalPhotos += state.damage.photos.length;
-
-  const pct = totalTasks ? Math.round(doneTasks/totalTasks*100) : 0;
-  document.getElementById('stat-tasks').textContent = doneTasks;
-  document.getElementById('stat-photos').textContent = totalPhotos;
-  document.getElementById('submit-bar').style.width = pct + '%';
-  document.getElementById('submit-task-label').textContent =
-    `${doneTasks} of ${totalTasks} tasks complete (${pct}%)`;
-
-  // On-site duration
-  if (state.checkInTime) {
-    const mins = Math.round((Date.now() - new Date(state.checkInTime)) / 60000);
-    const h = Math.floor(mins/60), m = mins%60;
-    document.getElementById('stat-onsite').textContent =
-      h > 0 ? `${h}h ${m}m` : `${m}m`;
-    document.getElementById('stat-onsite').classList.remove('dash');
-  }
-
-  // Restore condition
-  if (state.condition) {
-    document.querySelectorAll('.cond-btn').forEach(b => {
-      b.classList.toggle('active', b.textContent === state.condition);
-    });
-  }
-
-  // Restore final notes & signature
-  document.getElementById('final-notes').value = state.finalNotes || '';
-  document.getElementById('sig-input').value   = state.signature  || '';
-}
-
-function setCondition(val) {
-  state.condition = val;
-  saveState();
-  document.querySelectorAll('.cond-btn').forEach(b =>
-    b.classList.toggle('active', b.textContent === val)
-  );
-}
-
-// ─────────────────────────────────────────────
-// NAVIGATION
-// ─────────────────────────────────────────────
-const TOTAL_STEPS = 9;
-
-function goToStep(step) {
-  // Save textarea state before leaving
-  saveTextareas();
-
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-' + step).classList.add('active');
-  currentStep = step;
-  window.scrollTo(0, 0);
-
-  updateNav();
-  updateBottomBar();
-
-  // Per-page init
-  if (step === 1) { startClock(); getGPS(); updateCheckInUI(); }
-  if (step === 2) { renderChecklist('lr'); renderPhotos('lr'); }
-  if (step === 3) { renderChecklist('kt'); renderPhotos('kt'); }
-  if (step === 4) { renderChecklist('bd'); renderPhotos('bd'); }
-  if (step === 5) { renderChecklist('bt'); renderPhotos('bt'); }
-  if (step === 6) { renderInventory(); }
-  if (step === 7) { renderDamage(); renderPhotos('dmg'); }
-  if (step === 8) { updateSubmitStats(); }
-
-  // Restore notes
-  if (step >= 2 && step <= 5) {
-    const rId = ROOM_IDS[step - 2];
-    document.getElementById(rId + '-notes').value = state[rId].notes || '';
-  }
-}
-
-function saveTextareas() {
-  if (currentStep >= 2 && currentStep <= 5) {
-    const rId = ROOM_IDS[currentStep - 2];
-    const el = document.getElementById(rId + '-notes');
-    if (el) { state[rId].notes = el.value; saveState(); }
-  }
-  if (currentStep === 8) {
-    state.finalNotes = document.getElementById('final-notes').value;
-    state.signature  = document.getElementById('sig-input').value;
-    saveState();
-  }
-}
-
-function goNext() {
-  if (currentStep === 0) {
-    const name = document.getElementById('worker-name').value.trim();
-    if (!name) { showToast('Please enter your name first'); return; }
-    state.workerName = name;
-    document.getElementById('nav-name').textContent = name;
-    document.getElementById('nav-avatar').textContent = name[0].toUpperCase();
-    saveState();
-  }
-  if (currentStep < TOTAL_STEPS - 1) goToStep(currentStep + 1);
-}
-
-function goBack() {
-  if (currentStep > 0) goToStep(currentStep - 1);
-}
-
-function updateNav() {
-  const tabs = document.querySelectorAll('.nav-tab');
-  tabs.forEach((tab, i) => {
-    tab.classList.remove('active','done','locked');
-    if (i < currentStep)      tab.classList.add('done');
-    else if (i === currentStep) tab.classList.add('active');
-    else                      tab.classList.add('locked');
-  });
-
-  // Allow clicking completed tabs
-  tabs.forEach((tab, i) => {
-    tab.onclick = i <= currentStep ? () => goToStep(i) : null;
-    tab.style.cursor = i <= currentStep ? 'pointer' : 'default';
-  });
-}
-
-function updateBottomBar() {
-  const back = document.getElementById('btn-back');
-  const next = document.getElementById('btn-next');
-  back.style.display = currentStep > 0 ? 'block' : 'none';
-
-  if (currentStep === TOTAL_STEPS - 1) {
-    next.style.display = 'none';
-  } else {
-    next.style.display = 'block';
-    next.textContent = 'Next';
-  }
-}
-
-// ─────────────────────────────────────────────
-// FINAL SUBMIT
-// ─────────────────────────────────────────────
-async function submitReport() {
-  saveTextareas();
-
-  const sig = document.getElementById('sig-input').value.trim();
-  if (!sig) { showToast('Please sign before submitting'); return; }
-  if (!state.condition) { showToast('Please select overall condition'); return; }
-
-  const btn = document.getElementById('submit-btn');
-  btn.disabled = true;
-  btn.textContent = 'Submitting...';
-
+// ── SAVE ALL STATE TO LOCALSTORAGE ───────────────────────────
+function saveState(){
   try {
-    const { db, doc, setDoc, serverTimestamp } = window._firebase;
-    if (!db) throw new Error('Firebase not ready');
+    const state={
+      currentStep,
+      workerName: document.getElementById('workerNameInput').value||'',
+      taskDone:{...taskDone},
+      taskNA:{...taskNA},
+      invState:{...invState},
+      checkinDone,
+      checkinTime: checkinTime ? checkinTime.toISOString() : null,
+      notes:{},
+      signature: document.getElementById('sigInput')?.value||'',
+    };
+    // Save all room notes
+    [2,3,4,5].forEach(p=>{
+      const el=document.getElementById('notes-'+p);
+      if(el) state.notes['notes-'+p]=el.value;
+    });
+    const finalNotes=document.getElementById('finalNotes');
+    if(finalNotes) state.notes['finalNotes']=finalNotes.value;
+    // Save task checkbox states
+    state.taskStates={};
+    document.querySelectorAll('.task-check-box').forEach((box,i)=>{
+      state.taskStates['box-'+i]={checked:box.classList.contains('checked'),na:box.classList.contains('na')};
+    });
+    // Save NA button states
+    state.naBtns={};
+    document.querySelectorAll('.task-na-btn').forEach((btn,i)=>{
+      state.naBtns['na-'+i]={active:btn.classList.contains('active'),text:btn.textContent};
+    });
+    // Save task text states
+    state.taskTexts={};
+    document.querySelectorAll('.task-text').forEach((txt,i)=>{
+      state.taskTexts['txt-'+i]={checked:txt.classList.contains('checked'),na:txt.classList.contains('na-text')};
+    });
+    localStorage.setItem(storageKey(), JSON.stringify(state));
+  } catch(e){ console.warn('Save failed',e); }
+}
 
-    const reportData = {
-      jobId,
-      workerName: state.workerName,
-      checkInTime: state.checkInTime,
-      checkInCoords: state.checkInCoords,
-      jobData,
-      rooms: {
-        livingRoom: { tasks: state.lr.tasks, notes: state.lr.notes, photoCount: state.lr.photos.length },
-        kitchen:    { tasks: state.kt.tasks, notes: state.kt.notes, photoCount: state.kt.photos.length },
-        bedroom:    { tasks: state.bd.tasks, notes: state.bd.notes, photoCount: state.bd.photos.length },
-        bathroom:   { tasks: state.bt.tasks, notes: state.bt.notes, photoCount: state.bt.photos.length },
-      },
-      inventory: state.inventory,
-      damage: { items: state.damage.items, photoCount: state.damage.photos.length },
-      condition: state.condition,
-      finalNotes: state.finalNotes,
-      signature: sig,
-      submittedAt: serverTimestamp(),
+// ── RESTORE STATE FROM LOCALSTORAGE ─────────────────────────
+function restoreState(){
+  try {
+    const raw=localStorage.getItem(storageKey());
+    if(!raw) return false;
+    const state=JSON.parse(raw);
+
+    // Restore worker name
+    if(state.workerName){
+      const inp=document.getElementById('workerNameInput');
+      if(inp){ inp.value=state.workerName; updateWorkerName(state.workerName); }
+    }
+    // Restore task counts
+    if(state.taskDone) Object.assign(taskDone, state.taskDone);
+    if(state.taskNA) Object.assign(taskNA, state.taskNA);
+    if(state.invState) Object.assign(invState, state.invState);
+
+    // Restore checkin
+    if(state.checkinDone && state.checkinTime){
+      checkinDone=true;
+      checkinTime=new Date(state.checkinTime);
+      const t=checkinTime.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+      const el=document.getElementById('checkinRecordedTime');
+      if(el) el.textContent='Arrived at '+t;
+      const bw=document.getElementById('checkinBtnWrap');
+      const bd=document.getElementById('checkinDoneBox');
+      if(bw) bw.style.display='none';
+      if(bd) bd.style.display='block';
+      const pill=document.getElementById('pill-1');
+      if(pill) pill.classList.add('done');
+    }
+
+    // Restore checkbox states
+    if(state.taskStates){
+      document.querySelectorAll('.task-check-box').forEach((box,i)=>{
+        const s=state.taskStates['box-'+i];
+        if(!s) return;
+        if(s.checked) box.classList.add('checked');
+        if(s.na){ box.classList.add('na'); box.disabled=true; }
+      });
+    }
+    // Restore NA buttons
+    if(state.naBtns){
+      document.querySelectorAll('.task-na-btn').forEach((btn,i)=>{
+        const s=state.naBtns['na-'+i];
+        if(!s) return;
+        if(s.active){ btn.classList.add('active'); btn.textContent=s.text; }
+      });
+    }
+    // Restore task text styles
+    if(state.taskTexts){
+      document.querySelectorAll('.task-text').forEach((txt,i)=>{
+        const s=state.taskTexts['txt-'+i];
+        if(!s) return;
+        if(s.checked) txt.classList.add('checked');
+        if(s.na) txt.classList.add('na-text');
+      });
+    }
+    // Restore room progress
+    [2,3,4,5].forEach(p=>updateRoomProgress(p));
+
+    // Restore inventory UI
+    Object.entries(invState).forEach(([i,state_val])=>{
+      if(!state_val) return;
+      const row=document.querySelectorAll('#invCard .inv-row')[i];
+      if(!row) return;
+      row.querySelectorAll('.inv-btn').forEach(b=>b.className='inv-btn');
+      const btns=row.querySelectorAll('.inv-btn'); btns.forEach(b=>{ if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes("'"+state_val+"'")) b.classList.add(state_val); });
+      if(btn) btn.classList.add(state_val);
+    });
+    const filled=Object.values(invState).filter(v=>v!==null).length;
+    const badge=document.getElementById('sbadge-6');
+    if(badge) badge.textContent=filled+'/'+invItems.length;
+
+    // Restore notes
+    if(state.notes){
+      Object.entries(state.notes).forEach(([id,val])=>{
+        const el=document.getElementById(id);
+        if(el) el.value=val;
+      });
+    }
+    // Restore signature
+    if(state.signature){
+      const sig=document.getElementById('sigInput');
+      if(sig) sig.value=state.signature;
+    }
+    // Restore step — go to saved step
+    if(typeof state.currentStep==='number' && state.currentStep>0){
+      goToStep(state.currentStep);
+    }
+    return true;
+  } catch(e){ console.warn('Restore failed',e); return false; }
+}
+
+// ── AUTO-SAVE HOOK ───────────────────────────────────────────
+function hookAutoSave(){
+  // Save on every checkbox click
+  document.querySelectorAll('.task-check-box,.task-na-btn').forEach(el=>{
+    el.addEventListener('click',()=>setTimeout(saveState,100));
+  });
+  // Save on every inv button click
+  document.getElementById('invCard')?.addEventListener('click',()=>setTimeout(saveState,100));
+  // Save on note typing
+  document.querySelectorAll('.notes-input').forEach(el=>{
+    el.addEventListener('input',()=>saveState());
+  });
+  // Save on sig type
+  document.getElementById('sigInput')?.addEventListener('input',saveState);
+  document.getElementById('workerNameInput')?.addEventListener('input',saveState);
+  // Save on step change
+  window._origGoToStep=goToStep;
+  goToStep=function(n){ window._origGoToStep(n); saveState(); };
+}
+
+// ── LOAD JOB FROM FIREBASE ───────────────────────────────────
+function loadFromURL(){
+  const p=new URLSearchParams(window.location.search);
+  const jobId=p.get('jobId');
+
+  if(jobId){
+    // Try loading from Firebase first
+    loadJobFromFirebase(jobId);
+  } else {
+    // No jobId — check for URL params (manual dispatch)
+    const set=(id,key,node)=>{const v=p.get(key);if(!v)return;const el=document.getElementById(id);if(!el)return;if(node){el.childNodes[0].nodeValue=v;}else{el.textContent=v;}};
+    set('jobAddress','address',true);
+    set('jobCity','city');
+    set('jobTypeBadge','type');
+    set('checkoutTime','checkout');
+    set('finishBy','finish');
+    set('timeWindow','window');
+    set('bedrooms','beds');
+    set('propType','proptype');
+    set('urgencyBadge','urgency');
+    const notes=[];
+    for(let i=1;i<=8;i++){const n=p.get('note'+i);if(n)notes.push(n);}
+    if(notes.length){document.getElementById('hostNotesList').innerHTML=notes.map(n=>'<li>'+n+'</li>').join('');}
+  }
+}
+
+// ── POPULATE JOB DATA INTO UI ────────────────────────────────
+function populateJob(job){
+  const setEl=(id,val,node)=>{if(!val)return;const el=document.getElementById(id);if(!el)return;if(node){el.childNodes[0].nodeValue=val;}else el.textContent=val;};
+  setEl('jobAddress', job.address||job.propertyAddress||'Property', true);
+  setEl('jobCity',    job.city||job.propertyCity||job.propertyAddress||'Dallas, TX 75201');
+  setEl('jobTypeBadge', job.serviceType ? job.serviceType.charAt(0).toUpperCase()+job.serviceType.slice(1)+' clean' : 'Cleaning');
+  setEl('checkoutTime', job.checkoutTime||job.checkout||job.checkoutTime||'—');
+  setEl('finishBy',   job.finishBy||job.mustFinishBy||'—');
+  // Show checkout date if available
+  if(job.checkoutDate){
+    const dateEl=document.getElementById('checkoutTime');
+    if(dateEl && dateEl.textContent==='—') dateEl.textContent=job.checkoutDate;
+  }
+  setEl('bedrooms',   job.bedrooms ? job.bedrooms+' bed / '+(job.bathrooms||'?')+' bath' : '—');
+  setEl('propType',   job.type||job.propertyType||'Airbnb');
+  if(job.cleanerNotes||job.notes){
+    const notes=(job.cleanerNotes||job.notes||'').split('
+').filter(Boolean);
+    const list=document.getElementById('hostNotesList');
+    if(list&&notes.length) list.innerHTML=notes.map(n=>'<li>'+n+'</li>').join('');
+  }
+  // Store jobId for Firebase save
+  window._currentJobId=job.id||new URLSearchParams(window.location.search).get('jobId');
+}
+
+function goToStep(n){
+  document.getElementById('page-'+currentStep).classList.remove('active');
+  document.getElementById('pill-'+currentStep).classList.remove('active');
+  currentStep=n;
+  document.getElementById('page-'+n).classList.add('active');
+  document.getElementById('pill-'+n).classList.add('active');
+  document.getElementById('pill-'+n).scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+  window.scrollTo(0,0);
+  updateNav();
+  if(n===8)updateSubmitSummary();
+}
+function nextStep(){if(currentStep<8)goToStep(currentStep+1);}
+function prevStep(){if(currentStep>0)goToStep(currentStep-1);}
+function updateNav(){
+  document.getElementById('prevBtn').style.display=currentStep===0?'none':'';
+  document.getElementById('bottomNav').style.display=currentStep===8?'none':'flex';
+}
+function updateWorkerName(val){
+  document.getElementById('workerNameDisplay').textContent=val||'Your name';
+  const i=val.trim().split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2);
+  document.getElementById('workerInitials').textContent=i||'—';
+}
+function toggleTask(item,page){
+  const box=item.querySelector('.task-check-box'),txt=item.querySelector('.task-text');
+  if(box.classList.contains('na'))return;
+  const done=box.classList.toggle('checked');
+  txt.classList.toggle('checked',done);
+  taskDone[page]=document.querySelectorAll('#tasks-'+page+' .task-check-box.checked').length;
+  updateRoomProgress(page);
+}
+function toggleNA(e,btn){
+  e.stopPropagation();
+  const item=btn.closest('.task-item'),box=item.querySelector('.task-check-box'),txt=item.querySelector('.task-text');
+  const page=parseInt(item.closest('.page').id.split('-')[1]);
+  const isNA=btn.classList.toggle('active');
+  btn.textContent=isNA?'Undo':'N/A';
+  box.classList.toggle('na',isNA);
+  if(isNA){box.classList.remove('checked');txt.classList.remove('checked');}
+  txt.classList.toggle('na-text',isNA);
+  taskNA[page]=document.querySelectorAll('#tasks-'+page+' .task-na-btn.active').length;
+  taskDone[page]=document.querySelectorAll('#tasks-'+page+' .task-check-box.checked').length;
+  updateRoomProgress(page);
+}
+function updateRoomProgress(page){
+  const total=taskCounts[page],na=taskNA[page]||0,done=taskDone[page]||0,eff=total-na;
+  const pct=eff>0?Math.round(done/eff*100):100;
+  document.getElementById('prog-'+page).style.width=pct+'%';
+  document.getElementById('plabel-'+page).textContent=done+' of '+eff+' complete'+(na>0?' ('+na+' N/A)':'');
+  const badge=document.getElementById('sbadge-'+page);
+  badge.textContent=done+'/'+eff;
+  badge.className='section-badge'+(done===eff?' done':'');
+  if(done===eff)document.getElementById('pill-'+page).classList.add('done');
+}
+function addPhotos(input,page){
+  Array.from(input.files).forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=document.createElement('img');img.src=e.target.result;img.className='photo-thumb';
+      const grid=document.getElementById('pgrid-'+page);
+      grid.insertBefore(img,grid.querySelector('label'));
+      photoCounts[page]=(photoCounts[page]||0)+1;totalPhotos++;
+      document.getElementById('pcount-'+page).textContent='('+photoCounts[page]+')';
+    };reader.readAsDataURL(file);
+  });input.value='';
+}
+function buildInventory(){
+  const card=document.getElementById('invCard');
+  invItems.forEach((item,i)=>{
+    invState[i]=null;
+    const row=document.createElement('div');row.className='inv-row';
+    row.innerHTML='<span class="inv-name">'+item+'</span><div class="inv-btns"><button class="inv-btn" onclick="setInv('+i+',\'ok\',this)">OK</button><button class="inv-btn" onclick="setInv('+i+',\'low\',this)">Low</button><button class="inv-btn" onclick="setInv('+i+',\'out\',this)">Out</button></div>';
+    card.appendChild(row);
+  });
+}
+function setInv(i,state,btn){
+  invState[i]=state;
+  btn.closest('.inv-row').querySelectorAll('.inv-btn').forEach(b=>b.className='inv-btn');
+  btn.classList.add(state);
+  const filled=Object.values(invState).filter(v=>v!==null).length;
+  document.getElementById('sbadge-6').textContent=filled+'/'+invItems.length;
+  if(filled===invItems.length)document.getElementById('pill-6').classList.add('done');
+}
+function addDamageItem(){
+  const c=document.getElementById('damageItems'),n=c.children.length+1;
+  const d=document.createElement('div');d.className='damage-card';
+  d.innerHTML='<div class="damage-label">Damage item '+n+'</div><textarea class="damage-input" placeholder="Location, severity, likely cause…" rows="3"></textarea>';
+  c.appendChild(d);
+}
+function setCond(btn,cls){
+  document.querySelectorAll('#condBtns .cond-btn').forEach(b=>b.className='cond-btn');
+  btn.classList.add(cls);
+}
+function startClock(){
+  const tick=()=>{
+    const n=new Date();
+    document.getElementById('clockDisplay').textContent=n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('dateDisplay').textContent=n.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  };tick();setInterval(tick,15000);
+}
+function requestGPS(){
+  if(!navigator.geolocation){enableCheckin('GPS not available — check in manually');return;}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const lat=pos.coords.latitude.toFixed(5),lng=pos.coords.longitude.toFixed(5);
+    document.getElementById('gpsCoords').textContent=lat+', '+lng;
+    document.getElementById('gpsDot').style.background='var(--green)';
+    document.getElementById('gpsText').style.color='var(--green-mid)';
+    document.getElementById('gpsText').textContent='GPS locked';
+    enableCheckin('Check in — log arrival time');
+    document.getElementById('checkinBtn').dataset.lat=lat;
+    document.getElementById('checkinBtn').dataset.lng=lng;
+  },()=>enableCheckin('GPS unavailable — check in manually'),{timeout:10000});
+}
+function enableCheckin(label){const btn=document.getElementById('checkinBtn');btn.disabled=false;btn.textContent=label;}
+function doCheckin(){
+  if(checkinDone)return;checkinDone=true;checkinTime=new Date();
+  const t=checkinTime.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('checkinRecordedTime').textContent='Arrived at '+t;
+  document.getElementById('checkinRecordedAddr').textContent=document.getElementById('jobAddress').childNodes[0].nodeValue.trim();
+  document.getElementById('checkinBtnWrap').style.display='none';
+  document.getElementById('checkinDoneBox').style.display='block';
+  document.getElementById('pill-1').classList.add('done');
+}
+function updateSubmitSummary(){
+  let done=0,possible=0;
+  [2,3,4,5].forEach(p=>{done+=taskDone[p]||0;possible+=taskCounts[p]-(taskNA[p]||0);});
+  const pct=possible>0?Math.round(done/possible*100):0;
+  document.getElementById('overall-prog').style.width=pct+'%';
+  document.getElementById('overall-label').textContent=done+' of '+possible+' tasks complete ('+pct+'%)';
+  document.getElementById('sum-done').textContent=done;
+  document.getElementById('sum-photos').textContent=totalPhotos;
+  if(checkinTime){const m=Math.round((new Date()-checkinTime)/60000);document.getElementById('sum-time').textContent=m<60?m+'m':Math.floor(m/60)+'h '+(m%60)+'m';}
+}
+function submitReport(){
+  const sig=document.getElementById('sigInput').value.trim();
+  if(!sig){alert('Please sign the report before submitting.');return;}
+  const btn=document.getElementById('submitBtn');btn.disabled=true;btn.textContent='Submitting…';
+  setTimeout(()=>{
+    btn.style.display='none';
+    const s=document.getElementById('successScreen');s.style.display='flex';
+    const n=new Date();
+    document.getElementById('successTime').textContent='Submitted '+n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})+' · '+n.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    document.getElementById('pill-8').classList.add('done');
+    // Clear saved progress on successful submit
+    try { localStorage.removeItem(storageKey()); } catch(e){}
+  },1200);
+}
+loadFromURL();
+buildInventory();
+startClock();
+updateNav();
+setTimeout(requestGPS,600);
+// Restore saved progress after DOM is ready
+setTimeout(()=>{ restoreState(); hookAutoSave(); }, 200);
+</script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey:            "AIzaSyA4zPUPv5WjTbwdX2cjqxSEe0zJLKPsGC8",
+      authDomain:        "agape-property-management.firebaseapp.com",
+      projectId:         "agape-property-management",
+      storageBucket:     "agape-property-management.firebasestorage.app",
+      messagingSenderId: "1083257058058",
+      appId:             "1:1083257058058:web:0700dfdab2700c0ee280f3"
     };
 
-    const reportId = `${jobId}_${Date.now()}`;
-    await setDoc(doc(db, 'reports', reportId), reportData);
+    const app     = initializeApp(firebaseConfig);
+    const db      = getFirestore(app);
+    const storage = getStorage(app);
 
-    state.submitted = true;
-    saveState();
-    document.getElementById('success-screen').classList.add('show');
+    // ── LOAD JOB FROM FIRESTORE ──────────────────────────────
+    window.loadJobFromFirebase = async function(jobId) {
+      try {
+        const jobSnap = await getDoc(doc(db, 'jobs', jobId));
+        if (!jobSnap.exists()) {
+          console.warn('Job not found:', jobId);
+          return;
+        }
+        const job = { id: jobSnap.id, ...jobSnap.data() };
 
-  } catch(err) {
-    console.error(err);
-    btn.disabled = false;
-    btn.textContent = 'Submit to Agape Property Management';
-    showToast('Error submitting — check your connection');
-  }
-}
+        // If job has a propertyId, also fetch property for full details
+        if (job.propertyId) {
+          try {
+            const propSnap = await getDoc(doc(db, 'properties', job.propertyId));
+            if (propSnap.exists()) {
+              const prop = propSnap.data();
+              job.propertyAddress = job.propertyAddress || prop.address;
+              job.city = prop.city || 'Dallas, TX 75201';
+              job.bedrooms = job.bedrooms || prop.bedrooms;
+              job.bathrooms = job.bathrooms || prop.bathrooms;
+              job.type = job.type || prop.type;
+              job.cleanerNotes = job.cleanerNotes || prop.cleanerNotes;
+            }
+          } catch(e) { console.warn('Property fetch failed', e); }
+        }
 
-// ─────────────────────────────────────────────
-// TOAST
-// ─────────────────────────────────────────────
-let toastTimer;
-function showToast(msg, type='') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'show' + (type ? ' ' + type : '');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { t.className = ''; }, 2800);
-}
+        // Populate the UI
+        window.populateJob(job);
+        console.log('Job loaded:', job.propertyAddress);
+      } catch(e) {
+        console.error('Job load failed:', e);
+      }
+    };
 
-// ─────────────────────────────────────────────
-// INIT
-// ─────────────────────────────────────────────
-function init() {
-  parseJobFromURL();
-  loadState();
-  renderJobCard();
+    window.saveReportToFirebase = async function(reportData, photoFiles) {
+      try {
+        const jobId = window._currentJobId || new URLSearchParams(window.location.search).get('jobId') || 'manual_' + Date.now();
 
-  // Restore worker name
-  if (state.workerName) {
-    document.getElementById('worker-name').value = state.workerName;
-    document.getElementById('nav-name').textContent = state.workerName;
-    document.getElementById('nav-avatar').textContent = state.workerName[0].toUpperCase();
-  }
+        // Upload all photos to Storage
+        var photoUrls = [];
+        for (var i = 0; i < photoFiles.length; i++) {
+          var file = photoFiles[i];
+          var path = 'photos/' + jobId + '/' + Date.now() + '_' + file.name;
+          var storageRef = ref(storage, path);
+          await uploadBytes(storageRef, file);
+          var url = await getDownloadURL(storageRef);
+          photoUrls.push(url);
+        }
 
-  // Auto-save notes on blur
-  document.getElementById('final-notes').addEventListener('input', () => {
-    state.finalNotes = document.getElementById('final-notes').value;
-    saveState();
-  });
-  document.getElementById('sig-input').addEventListener('input', () => {
-    state.signature = document.getElementById('sig-input').value;
-    saveState();
-  });
-  document.getElementById('worker-name').addEventListener('input', (e) => {
-    const name = e.target.value.trim();
-    if (name) {
-      state.workerName = name;
-      document.getElementById('nav-name').textContent = name;
-      document.getElementById('nav-avatar').textContent = name[0].toUpperCase();
-      saveState();
-    }
-  });
+        // Save report to Firestore
+        var reportRef = await addDoc(collection(db, "reports"), {
+          jobId,
+          ...reportData,
+          photoUrls,
+          submittedAt: serverTimestamp()
+        });
 
-  // Wire up room note autosave
-  ROOM_IDS.forEach(r => {
-    const el = document.getElementById(r + '-notes');
-    if (el) el.addEventListener('input', () => {
-      state[r].notes = el.value;
-      saveState();
-    });
-  });
+        // Update job status to complete
+        try {
+          await updateDoc(doc(db, "jobs", jobId), {
+            status: "complete",
+            reportId: reportRef.id,
+            completedAt: serverTimestamp()
+          });
+        } catch(e) { console.log("Job update skipped — manual job"); }
 
-  goToStep(0);
-  updateBottomBar();
-}
-
-document.addEventListener('DOMContentLoaded', init);
-</script>
+        console.log("Report saved:", reportRef.id);
+        return { success: true, reportId: reportRef.id };
+      } catch (err) {
+        console.error("Report save error:", err);
+        return { success: false, error: err.message };
+      }
+    };
+  </script>
 </body>
 </html>
