@@ -1,1 +1,319 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agape Property Management — Dallas, TX</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: #ffffff; color: #111; font-family: 'Jost', sans-serif; font-weight: 300; }
+
+/* NAV */
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: #111; height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; }
+.nav-logo img { height: 32px; filter: invert(1) brightness(0.9); }
+.nav-links { display: flex; gap: 28px; align-items: center; }
+.nav-links a { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.5); text-decoration: none; transition: color 0.18s; }
+.nav-links a:hover { color: #4CAF50; }
+.nav-operator { font-size: 11px; letter-spacing: 0.1em; color: #4CAF50; text-decoration: none; border: 1px solid rgba(76,175,80,0.4); padding: 6px 14px; border-radius: 4px; transition: all 0.18s; }
+.nav-operator:hover { background: #4CAF50; color: #111; }
+
+/* HERO */
+.hero { min-height: 100vh; background: #111; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 100px 24px 80px; position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 60%, rgba(76,175,80,0.06) 0%, transparent 70%); pointer-events: none; }
+.hero-tag { font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase; color: #4CAF50; margin-bottom: 20px; }
+.hero-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(48px, 8vw, 88px); font-weight: 300; color: #ffffff; line-height: 1.0; margin-bottom: 20px; }
+.hero-title em { font-style: italic; color: #4CAF50; }
+.hero-sub { font-size: 15px; color: rgba(255,255,255,0.4); max-width: 480px; line-height: 1.8; margin-bottom: 52px; }
+.hero-cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.btn-primary { background: #4CAF50; color: #111; border: none; padding: 15px 32px; font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; cursor: pointer; text-decoration: none; display: inline-block; transition: all 0.2s; border-radius: 4px; }
+.btn-primary:hover { background: #43A047; transform: translateY(-1px); }
+.btn-ghost { background: transparent; color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.2); padding: 15px 32px; font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; cursor: pointer; text-decoration: none; display: inline-block; transition: all 0.2s; border-radius: 4px; }
+.btn-ghost:hover { border-color: rgba(255,255,255,0.5); color: white; }
+.hero-scroll { position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.hero-scroll span { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255,255,255,0.2); }
+.scroll-line { width: 1px; height: 40px; background: linear-gradient(to bottom, rgba(76,175,80,0.6), transparent); }
+
+/* STATS BAR */
+.stats-bar { background: #4CAF50; padding: 20px 40px; display: flex; justify-content: center; gap: 60px; flex-wrap: wrap; }
+.stat { text-align: center; }
+.stat-n { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 400; color: #111; line-height: 1; }
+.stat-l { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(17,17,17,0.6); margin-top: 3px; }
+
+/* SECTION SHARED */
+.section { padding: 96px 40px; max-width: 1100px; margin: 0 auto; }
+.section-tag { font-size: 9px; letter-spacing: 0.24em; text-transform: uppercase; color: #4CAF50; margin-bottom: 12px; }
+.section-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(32px, 5vw, 52px); font-weight: 300; color: #111; line-height: 1.1; margin-bottom: 16px; }
+.section-sub { font-size: 14px; color: #666; line-height: 1.8; max-width: 540px; margin-bottom: 52px; }
+
+/* WHO SECTION — 3 PORTALS */
+.who-section { background: #f8f8f8; padding: 96px 40px; }
+.who-inner { max-width: 1100px; margin: 0 auto; }
+.who-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-top: 52px; }
+@media(max-width: 768px) { .who-grid { grid-template-columns: 1fr; } nav { padding: 0 20px; } .stats-bar { gap: 30px; } }
+.who-card { background: #111; padding: 48px 36px; display: flex; flex-direction: column; position: relative; overflow: hidden; transition: transform 0.2s; }
+.who-card:hover { transform: translateY(-3px); }
+.who-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: #4CAF50; transform: scaleX(0); transform-origin: left; transition: transform 0.3s ease; }
+.who-card:hover::before { transform: scaleX(1); }
+.who-card-num { font-family: 'Cormorant Garamond', serif; font-size: 56px; color: rgba(255,255,255,0.04); line-height: 1; margin-bottom: 24px; font-weight: 400; }
+.who-card-icon { font-size: 24px; margin-bottom: 18px; }
+.who-card-title { font-family: 'Cormorant Garamond', serif; font-size: 26px; color: white; margin-bottom: 10px; font-weight: 400; }
+.who-card-sub { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.7; flex: 1; margin-bottom: 28px; }
+.who-card-features { display: flex; flex-direction: column; gap: 8px; margin-bottom: 32px; }
+.who-feature { display: flex; align-items: center; gap: 8px; font-size: 12px; color: rgba(255,255,255,0.55); }
+.who-feature::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: #4CAF50; flex-shrink: 0; }
+.who-btn { display: inline-block; text-decoration: none; font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; padding: 12px 22px; border-radius: 4px; transition: all 0.18s; text-align: center; }
+.who-btn-green { background: #4CAF50; color: #111; }
+.who-btn-green:hover { background: #43A047; }
+.who-btn-outline { border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); }
+.who-btn-outline:hover { border-color: #4CAF50; color: #4CAF50; }
+
+/* HOW IT WORKS */
+.how-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; }
+@media(max-width: 768px) { .how-grid { grid-template-columns: 1fr 1fr; } }
+.how-step { }
+.how-num { font-family: 'Cormorant Garamond', serif; font-size: 48px; color: #4CAF50; line-height: 1; margin-bottom: 14px; font-weight: 300; }
+.how-title { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 8px; }
+.how-desc { font-size: 13px; color: #777; line-height: 1.6; }
+
+/* SERVICES STRIP */
+.services-strip { background: #111; padding: 64px 40px; }
+.services-inner { max-width: 1100px; margin: 0 auto; }
+.services-grid { display: flex; gap: 0; overflow-x: auto; scrollbar-width: none; margin-top: 36px; }
+.services-grid::-webkit-scrollbar { display: none; }
+.svc-chip { flex-shrink: 0; border: 1px solid rgba(255,255,255,0.1); padding: 18px 24px; display: flex; align-items: center; gap: 10px; transition: all 0.18s; cursor: default; }
+.svc-chip:hover { border-color: #4CAF50; background: rgba(76,175,80,0.06); }
+.svc-chip-icon { font-size: 16px; }
+.svc-chip-name { font-size: 12px; color: rgba(255,255,255,0.5); letter-spacing: 0.06em; white-space: nowrap; }
+
+/* TRUST */
+.trust-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+@media(max-width: 768px) { .trust-grid { grid-template-columns: 1fr; } }
+.trust-card { background: #f8f8f8; padding: 36px 32px; }
+.trust-icon { font-size: 22px; margin-bottom: 14px; }
+.trust-title { font-size: 15px; font-weight: 600; color: #111; margin-bottom: 8px; }
+.trust-desc { font-size: 13px; color: #777; line-height: 1.7; }
+
+/* CTA BAND */
+.cta-band { background: #4CAF50; padding: 80px 40px; text-align: center; }
+.cta-band-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(36px, 5vw, 56px); color: #111; margin-bottom: 12px; font-weight: 300; }
+.cta-band-sub { font-size: 14px; color: rgba(17,17,17,0.6); margin-bottom: 36px; }
+.cta-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.cta-btn-dark { background: #111; color: white; border: none; padding: 15px 32px; font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; cursor: pointer; text-decoration: none; display: inline-block; transition: all 0.2s; border-radius: 4px; }
+.cta-btn-dark:hover { background: #333; }
+.cta-btn-white { background: white; color: #111; border: none; padding: 15px 32px; font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; cursor: pointer; text-decoration: none; display: inline-block; transition: all 0.2s; border-radius: 4px; }
+.cta-btn-white:hover { background: #f5f5f5; }
+
+/* FOOTER */
+footer { background: #111; padding: 48px 40px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
+.footer-logo img { height: 28px; filter: invert(1) brightness(0.7); }
+.footer-links { display: flex; gap: 24px; }
+.footer-links a { font-size: 11px; color: rgba(255,255,255,0.3); text-decoration: none; letter-spacing: 0.08em; transition: color 0.18s; }
+.footer-links a:hover { color: #4CAF50; }
+.footer-copy { font-size: 11px; color: rgba(255,255,255,0.2); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo"><img src="../agape-logo.png" alt="Agape PM"></div>
+  <div class="nav-links">
+    <a href="../host/">For hosts</a>
+    <a href="../join/">Join our team</a>
+    <a href="../operator/" class="nav-operator">Operator login</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">Dallas, TX — Premium property services</div>
+  <h1 class="hero-title">Property management<br>done <em>right.</em></h1>
+  <p class="hero-sub">Agape connects Dallas property owners with elite service providers — cleaners, plumbers, HVAC techs, and more. Every job tracked, reported, and paid automatically.</p>
+  <div class="hero-cta">
+    <a href="../host/" class="btn-primary">I'm a property owner</a>
+    <a href="../join/" class="btn-ghost">I'm a service provider</a>
+  </div>
+  <div class="hero-scroll">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</div>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stat"><div class="stat-n">7</div><div class="stat-l">Services offered</div></div>
+  <div class="stat"><div class="stat-n">24h</div><div class="stat-l">Cleaner matched</div></div>
+  <div class="stat"><div class="stat-n">2 day</div><div class="stat-l">Worker payout</div></div>
+  <div class="stat"><div class="stat-n">100%</div><div class="stat-l">Photo reported</div></div>
+</div>
+
+<!-- WHO IS THIS FOR -->
+<div class="who-section">
+  <div class="who-inner">
+    <div class="section-tag">Who we serve</div>
+    <div class="section-title">One platform.<br>Three portals.</div>
+    <div class="who-grid">
+
+      <!-- HOST -->
+      <div class="who-card">
+        <div class="who-card-num">01</div>
+        <div class="who-card-icon">🏠</div>
+        <div class="who-card-title">Property owners</div>
+        <div class="who-card-sub">Airbnb hosts and long-term rental owners who want professional service, full transparency, and zero hassle.</div>
+        <div class="who-card-features">
+          <div class="who-feature">Auto-dispatch on every booking</div>
+          <div class="who-feature">Photo report after every job</div>
+          <div class="who-feature">One-tap payment approval</div>
+          <div class="who-feature">Real-time job tracking</div>
+        </div>
+        <a href="../host/" class="who-btn who-btn-green">Get started →</a>
+      </div>
+
+      <!-- SERVICE PROVIDER -->
+      <div class="who-card">
+        <div class="who-card-num">02</div>
+        <div class="who-card-icon">✦</div>
+        <div class="who-card-title">Service providers</div>
+        <div class="who-card-sub">Cleaners, plumbers, HVAC techs, lawn care pros, and more. Join an elite network with premium clients and fast pay.</div>
+        <div class="who-card-features">
+          <div class="who-feature">Accept jobs on your schedule</div>
+          <div class="who-feature">GPS check-in timestamps arrival</div>
+          <div class="who-feature">Paid within 2 business days</div>
+          <div class="who-feature">Grow from Standard to White Glove</div>
+        </div>
+        <a href="../join/" class="who-btn who-btn-green">Apply now →</a>
+      </div>
+
+      <!-- OPERATOR (YOU) -->
+      <div class="who-card" style="border: 1px solid rgba(76,175,80,0.2);">
+        <div class="who-card-num">03</div>
+        <div class="who-card-icon">⚙</div>
+        <div class="who-card-title">Operator</div>
+        <div class="who-card-sub">The Agape command center. Manage all properties, workers, jobs, and payments from one dashboard.</div>
+        <div class="who-card-features">
+          <div class="who-feature">Live job monitoring</div>
+          <div class="who-feature">Approve new worker applications</div>
+          <div class="who-feature">Full financial overview</div>
+          <div class="who-feature">Auto-dispatch management</div>
+        </div>
+        <a href="../operator/" class="who-btn who-btn-outline">Operator login →</a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div style="background: white; padding: 96px 40px;">
+  <div style="max-width: 1100px; margin: 0 auto;">
+    <div class="section-tag">How it works</div>
+    <div class="section-title">Four steps.<br>Fully automatic.</div>
+    <div class="how-grid">
+      <div class="how-step">
+        <div class="how-num">01</div>
+        <div class="how-title">Booking confirmed</div>
+        <div class="how-desc">Your Airbnb calendar syncs automatically. The moment a booking is confirmed, Agape detects it.</div>
+      </div>
+      <div class="how-step">
+        <div class="how-num">02</div>
+        <div class="how-title">Cleaner dispatched</div>
+        <div class="how-desc">Your assigned cleaner receives a job link with the property details, check-out time, and your notes.</div>
+      </div>
+      <div class="how-step">
+        <div class="how-num">03</div>
+        <div class="how-title">Report submitted</div>
+        <div class="how-desc">After the clean, you receive a full photo report with inventory status and any damage noted.</div>
+      </div>
+      <div class="how-step">
+        <div class="how-num">04</div>
+        <div class="how-title">Payment approved</div>
+        <div class="how-desc">Review the report and tap approve. Payment goes to your cleaner within 2 business days.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SERVICES -->
+<div class="services-strip">
+  <div class="services-inner">
+    <div class="section-tag" style="color:#4CAF50;">What we offer</div>
+    <div class="section-title" style="color:white;margin-bottom:0;">Every service your<br>property needs.</div>
+    <div class="services-grid">
+      <div class="svc-chip"><span class="svc-chip-icon">🧹</span><span class="svc-chip-name">Cleaning</span></div>
+      <div class="svc-chip"><span class="svc-chip-icon">🔧</span><span class="svc-chip-name">Plumbing</span></div>
+      <div class="svc-chip"><span class="svc-chip-icon">❄️</span><span class="svc-chip-name">HVAC</span></div>
+      <div class="svc-chip"><span class="svc-chip-icon">🌿</span><span class="svc-chip-name">Lawn care</span></div>
+      <div class="svc-chip"><span class="svc-chip-icon">👕</span><span class="svc-chip-name">Laundry</span></div>
+      <div class="svc-chip"><span class="svc-chip-icon">📦</span><span class="svc-chip-name">Moving</span></div>
+      <div class="svc-chip"><span class="svc-chip-icon">🛍</span><span class="svc-chip-name">Errands & staging</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- TRUST -->
+<div style="background: white; padding: 96px 40px;">
+  <div style="max-width: 1100px; margin: 0 auto;">
+    <div class="section-tag">Why Agape</div>
+    <div class="section-title">The standard<br>others miss.</div>
+    <div class="trust-grid">
+      <div class="trust-card">
+        <div class="trust-icon">📸</div>
+        <div class="trust-title">Photo documentation</div>
+        <div class="trust-desc">Every job produces a full photo report — before and after. Damage is logged immediately with photos, protecting you from guest disputes.</div>
+      </div>
+      <div class="trust-card">
+        <div class="trust-icon">⏰</div>
+        <div class="trust-title">GPS-verified arrival</div>
+        <div class="trust-desc">Every worker GPS check-in timestamps their arrival. You always know when they showed up — and how long they stayed.</div>
+      </div>
+      <div class="trust-card">
+        <div class="trust-icon">✨</div>
+        <div class="trust-title">The Agape signature</div>
+        <div class="trust-desc">The folded towel, the welcome card, the restocked coffee. Details your guests notice and your competition ignores.</div>
+      </div>
+      <div class="trust-card">
+        <div class="trust-icon">📦</div>
+        <div class="trust-title">Inventory tracking</div>
+        <div class="trust-desc">Every supply checked on every visit. You'll never get a 2am message from a guest about running out of toilet paper again.</div>
+      </div>
+      <div class="trust-card">
+        <div class="trust-icon">💳</div>
+        <div class="trust-title">Transparent payments</div>
+        <div class="trust-desc">You see exactly where every dollar goes. Service fee, platform cut, worker payout — all broken down before you approve.</div>
+      </div>
+      <div class="trust-card">
+        <div class="trust-icon">🔒</div>
+        <div class="trust-title">Total discretion</div>
+        <div class="trust-desc">Every Agape worker is ID-verified and trained on our standards. What happens in your home stays there.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CTA BAND -->
+<div class="cta-band">
+  <div class="cta-band-title">Ready to get started?</div>
+  <div class="cta-band-sub">Join property owners across Dallas who trust Agape to run their properties.</div>
+  <div class="cta-btns">
+    <a href="../host/" class="cta-btn-dark">List my property</a>
+    <a href="../join/" class="cta-btn-white">Join as a provider</a>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo"><img src="../agape-logo.png" alt="Agape PM"></div>
+  <div class="footer-links">
+    <a href="../host/">Host signup</a>
+    <a href="../join/">Provider signup</a>
+    <a href="../portal/">Host portal</a>
+    <a href="../worker/">Worker app</a>
+  </div>
+  <div class="footer-copy">© 2026 Agape Property Management · Dallas, TX</div>
+</footer>
+
+</body>
+</html>
