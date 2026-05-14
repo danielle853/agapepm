@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'functions/**'
+      - 'firebase.json'
+      - '.firebaserc'
 
 jobs:
   deploy:
@@ -12,10 +14,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js 18
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
 
@@ -25,17 +27,17 @@ jobs:
       - name: Install function dependencies
         run: cd functions && npm install
 
-      - name: Set Firebase config
+      - name: Deploy functions
+        run: firebase deploy --only functions --project agape-property-management
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+
+      - name: Set runtime config
         run: |
           firebase functions:config:set \
             gmail.user="${{ secrets.GMAIL_USER }}" \
             gmail.pass="${{ secrets.GMAIL_PASS }}" \
             twilio.sid="${{ secrets.TWILIO_SID }}" \
             twilio.token="${{ secrets.TWILIO_TOKEN }}"
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-
-      - name: Deploy functions
-        run: firebase deploy --only functions --project agape-property-management
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
