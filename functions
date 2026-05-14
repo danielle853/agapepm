@@ -12,7 +12,7 @@
     "firebase-functions": "^4.3.1",
     "nodemailer": "^6.9.3",
     "twilio": "^4.19.0"
-  },
+  }const OPERATOR_WHATSAPP = 'whatsapp:+14696058877';,
   "private": true
 }
 /**
