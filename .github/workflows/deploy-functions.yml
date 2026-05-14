@@ -28,10 +28,13 @@ jobs:
       - name: Install function dependencies
         run: cd functions && npm install
 
+      - name: Write service account key
+        run: echo '${{ secrets.FIREBASE_TOKEN }}' > /tmp/service-account.json
+
       - name: Deploy functions
         run: firebase deploy --only functions --project agape-property-management
         env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/service-account.json
 
       - name: Set runtime config
         run: |
@@ -41,4 +44,7 @@ jobs:
             twilio.sid="${{ secrets.TWILIO_SID }}" \
             twilio.token="${{ secrets.TWILIO_TOKEN }}"
         env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/service-account.json
+
+      - name: Clean up key
+        run: rm /tmp/service-account.json
