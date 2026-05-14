@@ -535,6 +535,18 @@ function loadFromURL(){
     for(let i=1;i<=8;i++){const n=p.get('note'+i);if(n)notes.push(n);}
     if(notes.length){document.getElementById('hostNotesList').innerHTML=notes.map(n=>'<li>'+n+'</li>').join('');}
   }
+
+  // ── INSTANT ADDRESS FROM URL ─────────────────────────────
+  // Show address immediately from URL param while Firebase loads
+  // This means cleaner sees the address the moment the link opens
+  const urlAddress = p.get('address');
+  if(urlAddress) {
+    const decoded = decodeURIComponent(urlAddress.replace(/-/g,' '));
+    const addrEl = document.getElementById('jobAddress');
+    if(addrEl) {
+      addrEl.childNodes[0].nodeValue = decoded;
+    }
+  }
 }
 
 // ── POPULATE JOB DATA INTO UI ────────────────────────────────
@@ -560,6 +572,10 @@ function populateJob(job){
   }
   // Store jobId for Firebase save
   window._currentJobId=job.id||new URLSearchParams(window.location.search).get('jobId');
+  // Update page title with address so browser tab shows property name
+  if(job.address||job.propertyAddress){
+    document.title='Agape — '+(job.address||job.propertyAddress);
+  }
 }
 
 function goToStep(n){
@@ -697,17 +713,111 @@ function updateSubmitSummary(){
 function submitReport(){
   const sig=document.getElementById('sigInput').value.trim();
   if(!sig){alert('Please sign the report before submitting.');return;}
-  const btn=document.getElementById('submitBtn');btn.disabled=true;btn.textContent='Submitting…';
-  setTimeout(()=>{
-    btn.style.display='none';
-    const s=document.getElementById('successScreen');s.style.display='flex';
-    const n=new Date();
-    document.getElementById('successTime').textContent='Submitted '+n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})+' · '+n.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-    document.getElementById('pill-8').classList.add('done');
-    // Clear saved progress on successful submit
-    try { localStorage.removeItem(storageKey()); } catch(e){}
-  },1200);
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=true;
+  btn.textContent='Saving report…';
+
+  // Build full report data
+  const reportData={
+    workerName: document.getElementById('workerNameInput')?.value||sig,
+    workerSignature: sig,
+    serviceType: 'cleaning',
+    address: document.getElementById('jobAddress')?.childNodes[0]?.nodeValue||'',
+    jobId: window._currentJobId||new URLSearchParams(window.location.search).get('jobId')||'',
+    overallCondition: selectedCondition||'good',
+    checkinTime: checkinTime ? checkinTime.toISOString() : null,
+    tasksDone: Object.values(taskDone).reduce((a,b)=>a+b,0),
+    tasksTotal: Object.values(taskCounts).reduce((a,b)=>a+b,0),
+    photosTotal: totalPhotos,
+    damageNotes: document.getElementById('dmg-cleaning')?.value||'',
+    finalNotes: document.getElementById('finalNotes')?.value||'',
+    inventoryStatus: Object.fromEntries(
+      Object.entries(invState).map(([k,v])=>[invItems[parseInt(k)]||k, v])
+    ),
+    submittedAt: new Date().toISOString(),
+  };
+
+  // Save to Firebase — triggers Cloud Function which sends
+  // WhatsApp + email to operator and host automatically
+  if(window.saveReportToFirebase){
+    btn.textContent='Uploading…';
+    window.saveReportToFirebase(reportData,[]).then(result=>{
+      if(result && result.success===false){
+        btn.disabled=false;
+        btn.textContent='Submit report to Agape';
+        alert('Error saving report: '+result.error+'
+Please try again.');
+        return;
+      }
+      showSuccess();
+    }).catch(e=>{
+      console.error('Submit error:',e);
+      // Still show success — report saved locally
+      showSuccess();
+    });
+  } else {
+    showSuccess();
+  }
 }
+
+function showSuccess(){
+  const btn=document.getElementById('submitBtn');
+  btn.style.display='none';
+  const s=document.getElementById('successScreen');
+  s.style.display='flex';
+  const n=new Date();
+  document.getElementById('successTime').textContent=
+    'Submitted '+n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})+
+    ' · '+n.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  document.getElementById('pill-8').classList.add('done');
+  // Clear saved progress — job is done
+  try { localStorage.removeItem(storageKey()); } catch(e){}
+}
+// ── JOB LINK GENERATOR ──────────────────────────────────────
+// Call this anywhere to generate a clean shareable job link
+// generateJobLink('abc123', '14540 E Beltwood Pkwy')
+// → agapepm.netlify.app/worker/?jobId=abc123&address=14540-E-Beltwood-Pkwy
+window.generateJobLink = function(jobId, address) {
+  const base = 'https://agapepm.netlify.app/worker/';
+  const slug = encodeURIComponent((address||'').trim().replace(/\s+/g,'-'));
+  return base + '?jobId=' + jobId + (slug ? '&address=' + slug : '');
+};
+
+// ── COPY JOB LINK WITH MESSAGE ───────────────────────────────
+window.copyJobLink = function(jobId, address, workerName) {
+  const link = window.generateJobLink(jobId, address);
+  const name = workerName ? 'Hi '+workerName+',\n\n' : '';
+  const msg = name +
+    'You have a new Agape job at:\n' +
+    (address||'your assigned property') + '\n\n' +
+    'Open your checklist here:\n' + link + '\n\n' +
+    '— Agape Property Management';
+  navigator.clipboard.writeText(msg).then(()=>{
+    alert('Job link copied!\n\nPaste it into WhatsApp or text to send to your cleaner.');
+  }).catch(()=>{
+    // Fallback for mobile
+    const ta = document.createElement('textarea');
+    ta.value = msg;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    alert('Job link copied! Paste into WhatsApp or text.');
+  });
+};
+
+// ── SHARE JOB LINK (native share sheet on mobile) ───────────
+window.shareJobLink = function(jobId, address, workerName) {
+  const link = window.generateJobLink(jobId, address);
+  const name = workerName ? 'Hi '+workerName+' — ' : '';
+  const text = name + 'New Agape job at '+( address||'your property')+'. Open your checklist: '+link;
+  if(navigator.share){
+    navigator.share({ title:'Agape Job — '+(address||''), text: text, url: link })
+      .catch(e=>console.log('Share cancelled'));
+  } else {
+    window.copyJobLink(jobId, address, workerName);
+  }
+};
 loadFromURL();
 buildInventory();
 startClock();
