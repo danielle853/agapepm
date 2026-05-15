@@ -23,16 +23,15 @@ const db = admin.firestore();
 
 // ── CONFIG ───────────────────────────────────────────────────
 const OPERATOR_EMAIL    = 'danielle.lindsey9@gmail.com';
-const OPERATOR_WHATSAPP = 'whatsapp:+14696058877'; // 
+const OPERATOR_WHATSAPP = 'whatsapp:+12145550100'; // update with your real number
 const OPERATOR_NAME     = 'Agape Property Management';
 const BASE_URL          = 'https://agapepm.netlify.app';
 
 // ── TWILIO CLIENT ────────────────────────────────────────────
 function getTwilio() {
-  const cfg = functions.config();
   return twilio(
-    cfg.twilio?.sid   || process.env.TWILIO_SID,
-    cfg.twilio?.token || process.env.TWILIO_TOKEN
+    process.env.TWILIO_SID,
+    process.env.TWILIO_TOKEN
   );
 }
 
@@ -40,12 +39,11 @@ const TWILIO_FROM = 'whatsapp:+14155238886'; // Twilio sandbox number
 
 // ── EMAIL TRANSPORTER ────────────────────────────────────────
 function getMailer() {
-  const cfg = functions.config();
   return nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: cfg.gmail?.user || process.env.GMAIL_USER,
-      pass: cfg.gmail?.pass || process.env.GMAIL_PASS,
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_PASS,
     }
   });
 }
