@@ -5,7 +5,7 @@
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log"
   },
-  "engines": { "node": "18" },
+  "engines": { "node": "20" },
   "main": "index.js",
   "dependencies": {
     "firebase-admin": "^11.8.0",
