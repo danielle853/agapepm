@@ -9,6 +9,9 @@ on:
       - '.firebaserc'
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -35,16 +38,10 @@ jobs:
         run: firebase deploy --only functions --project agape-property-management
         env:
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/service-account.json
-
-      - name: Set runtime config
-        run: |
-          firebase functions:config:set \
-            gmail.user="${{ secrets.GMAIL_USER }}" \
-            gmail.pass="${{ secrets.GMAIL_PASS }}" \
-            twilio.sid="${{ secrets.TWILIO_SID }}" \
-            twilio.token="${{ secrets.TWILIO_TOKEN }}"
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: /tmp/service-account.json
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_PASS: ${{ secrets.GMAIL_PASS }}
+          TWILIO_SID: ${{ secrets.TWILIO_SID }}
+          TWILIO_TOKEN: ${{ secrets.TWILIO_TOKEN }}
 
       - name: Clean up key
         run: rm /tmp/service-account.json
