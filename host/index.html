@@ -1,664 +1,570 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Host Onboarding — Agape PM</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet"/>
-  <style>
-    :root {
-      --white: #FFFFFF;
-      --black: #0E0E0E;
-      --green: #4CAF50;
-      --green-light: #A5D6A7;
-      --muted: #8A8A8A;
-      --border: #E8E2D9;
-      --card-bg: #FFFFFF;
-      --error-red: #A0281E;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Jost', sans-serif;
-      background: #F5F5F5;
-      color: var(--black);
-      min-height: 100vh;
-    }
-    header {
-      background: var(--black);
-      padding: 16px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .logo {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 24px;
-      color: var(--white);
-      letter-spacing: 0.04em;
-    }
-    .logo span { color: var(--green); }
-    .header-sub {
-      font-size: 11px;
-      color: rgba(250,247,242,0.45);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agape PM — Host Onboarding</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #f5f5f5; font-family: 'Jost', sans-serif; font-weight: 300; min-height: 100vh; color: #1a1714; }
 
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 32px 20px 60px;
-    }
+/* TOP NAV */
+.topnav { background: #1a1714; padding: 0 32px; height: 52px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+.nav-logo { font-family: 'Jost', sans-serif; font-size: 16px; font-weight: 600; color: white; letter-spacing: 0.02em; }
+.nav-logo span { color: #4CAF50; }
+.nav-login { font-size: 12px; color: rgba(255,255,255,0.5); cursor: pointer; letter-spacing: 0.06em; }
+.nav-login:hover { color: white; }
 
-    /* Progress */
-    .progress-header { margin-bottom: 32px; }
-    .progress-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 28px;
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-    .progress-subtitle {
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 20px;
-    }
-    .steps-bar {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-    .step-pip {
-      flex: 1;
-      height: 3px;
-      border-radius: 2px;
-      background: var(--border);
-      transition: background 0.3s;
-    }
-    .step-pip.done { background: #4CAF50; }
-    .step-pip.active { background: var(--black); }
-    .steps-label {
-      font-size: 11px;
-      color: var(--muted);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
+/* PROGRESS BAR */
+.progress-strip { background: #e8e8e8; height: 3px; }
+.progress-fill { height: 3px; background: #4CAF50; transition: width 0.4s ease; }
 
-    /* Form cards */
-    .form-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 28px;
-      margin-bottom: 16px;
-      display: none;
-    }
-    .form-card.active { display: block; }
-    .card-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 22px;
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-    .card-desc {
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 24px;
-      line-height: 1.5;
-    }
+/* LAYOUT */
+.page-wrap { min-height: calc(100vh - 55px); display: flex; flex-direction: column; align-items: center; padding: 40px 20px 80px; }
+.step-counter { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #888; margin-bottom: 20px; align-self: flex-start; max-width: 560px; width: 100%; }
 
-    /* Fields */
-    .field { margin-bottom: 18px; }
-    label {
-      display: block;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
-    label .required { color: var(--error-red); margin-left: 2px; }
-    label .opt {
-      color: var(--muted);
-      font-weight: 400;
-      letter-spacing: 0;
-      text-transform: none;
-      font-size: 10px;
-      margin-left: 4px;
-    }
-    input[type="text"],
-    input[type="email"],
-    input[type="tel"],
-    input[type="url"],
-    input[type="number"],
-    select,
-    textarea {
-      width: 100%;
-      padding: 12px 14px;
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      font-family: 'Jost', sans-serif;
-      font-size: 14px;
-      color: var(--black);
-      background: #F5F5F5;
-      transition: border-color 0.2s;
-      outline: none;
-    }
-    input:focus, select:focus, textarea:focus {
-      border-color: var(--black);
-    }
-    textarea { resize: vertical; min-height: 80px; }
-    select { appearance: none; cursor: pointer; }
+/* CARD */
+.card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04); padding: 32px 36px; width: 100%; max-width: 560px; margin-bottom: 12px; }
+.card-title { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 400; margin-bottom: 6px; color: #1a1714; }
+.card-sub { font-size: 13px; color: #888; line-height: 1.6; margin-bottom: 24px; }
 
-    .field-hint {
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 5px;
-      line-height: 1.4;
-    }
+/* FIELDS */
+.field { margin-bottom: 18px; }
+.field:last-of-type { margin-bottom: 0; }
+.field label { display: block; font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: #555; margin-bottom: 6px; }
+.field label .req { color: #4CAF50; margin-left: 2px; }
+.field label .opt { color: #aaa; font-size: 9px; font-weight: 400; letter-spacing: 0.06em; margin-left: 4px; text-transform: none; }
+.field input, .field select, .field textarea {
+  width: 100%; border: 1.5px solid #e8e8e8; border-radius: 8px;
+  padding: 12px 14px; font-family: 'Jost', sans-serif; font-size: 14px;
+  font-weight: 300; color: #1a1714; background: #fafafa;
+  outline: none; transition: border-color 0.18s, background 0.18s;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: #4CAF50; background: white;
+}
+.field input::placeholder, .field textarea::placeholder { color: #bbb; }
+.field textarea { resize: vertical; min-height: 80px; }
+.field select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%23888' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.field-hint { font-size: 11px; color: #aaa; margin-top: 6px; line-height: 1.5; }
 
-    /* iCal special styling */
-    .ical-card {
-      background: #F1F8F1;
-      border: 1.5px solid #A5D6A7;
-      border-radius: 12px;
-      padding: 16px;
-      margin-top: 12px;
-    }
-    .ical-card .ical-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: #1B5E20;
-      margin-bottom: 4px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .ical-card .ical-steps {
-      font-size: 12px;
-      color: #2E7D32;
-      line-height: 1.7;
-    }
-    .ical-card .ical-steps li {
-      margin-left: 16px;
-    }
+/* iCal special field */
+.ical-field { display: none; }
+.ical-banner { background: #E8F5E9; border: 1.5px solid rgba(76,175,80,0.3); border-radius: 8px; padding: 12px 14px; margin-bottom: 18px; display: none; }
+.ical-banner-title { font-size: 12px; font-weight: 500; color: #388E3C; margin-bottom: 3px; }
+.ical-banner-sub { font-size: 11px; color: #555; line-height: 1.5; }
 
-    /* Row fields */
-    .field-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
+/* Schedule field */
+.schedule-field { display: none; }
 
-    /* Services checkboxes */
-    .services-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-    .service-check {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .service-check:hover { border-color: var(--black); }
-    .service-check input[type="checkbox"] { accent-color: var(--black); width: 16px; height: 16px; }
-    .service-check span { font-size: 13px; }
+/* SERVICE GRID */
+.svc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px; }
+.svc-item { border: 1.5px solid #e8e8e8; border-radius: 8px; padding: 12px 14px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.18s; background: #fafafa; }
+.svc-item:hover { border-color: #4CAF50; background: #f5fbf5; }
+.svc-item.on { border-color: #4CAF50; background: #E8F5E9; }
+.svc-item.on .svc-name { color: #388E3C; font-weight: 500; }
+.svc-icon { font-size: 16px; }
+.svc-name { font-size: 13px; color: #3d3830; }
 
-    /* Buttons */
-    .btn-row {
-      display: flex;
-      gap: 10px;
-      margin-top: 8px;
-    }
-    .btn {
-      flex: 1;
-      padding: 14px;
-      border: none;
-      border-radius: 10px;
-      font-family: 'Jost', sans-serif;
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .btn-primary { background: var(--black); color: var(--white); }
-    .btn-primary:hover { background: #1a1a1a; }
-    .btn-secondary { background: transparent; color: var(--black); border: 1.5px solid var(--border); }
-    .btn-secondary:hover { border-color: var(--black); }
-    .btn-green { background: #4CAF50; color: var(--black); }
-    .btn-green:hover { background: #388E3C; }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+/* BUTTONS */
+.btn-continue { width: 100%; padding: 15px; background: #1a1714; color: white; border: none; border-radius: 8px; font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; margin-top: 24px; }
+.btn-continue:hover { background: #333; }
+.btn-continue:disabled { background: #ccc; cursor: default; }
+.btn-back { background: none; border: none; font-family: 'Jost', sans-serif; font-size: 12px; color: #888; cursor: pointer; letter-spacing: 0.06em; padding: 0; margin-top: 16px; display: block; text-align: center; width: 100%; transition: color 0.18s; }
+.btn-back:hover { color: #1a1714; }
 
-    /* Success */
-    #step-success {
-      text-align: center;
-      padding: 48px 24px;
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-    }
-    .success-icon { font-size: 56px; margin-bottom: 16px; }
-    .success-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 32px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-    .success-sub {
-      font-size: 14px;
-      color: var(--muted);
-      line-height: 1.6;
-      max-width: 380px;
-      margin: 0 auto 24px;
-    }
-    .success-actions { display: flex; flex-direction: column; gap: 10px; max-width: 280px; margin: 0 auto; }
+/* REVIEW ROWS */
+.review-row { display: flex; justify-content: space-between; align-items: baseline; padding: 11px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+.review-row:last-child { border-bottom: none; }
+.review-label { color: #888; }
+.review-value { color: #1a1714; font-weight: 400; text-align: right; max-width: 60%; }
 
-    /* Toast */
-    .toast {
-      position: fixed;
-      bottom: 24px; left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      background: var(--black);
-      color: var(--white);
-      padding: 12px 20px;
-      border-radius: 24px;
-      font-size: 13px;
-      font-weight: 500;
-      transition: transform 0.3s;
-      z-index: 999;
-    }
-    .toast.show { transform: translateX(-50%) translateY(0); }
-    .toast.error-toast { background: var(--error-red); }
-  </style>
+/* PASSWORD */
+.pass-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+
+/* AGREE */
+.agree-box { display: flex; gap: 10px; align-items: flex-start; padding: 14px; background: #fafafa; border: 1.5px solid #e8e8e8; border-radius: 8px; margin-bottom: 4px; cursor: pointer; }
+.agree-box input { margin-top: 2px; accent-color: #4CAF50; cursor: pointer; flex-shrink: 0; }
+.agree-box label { font-size: 12px; color: #555; line-height: 1.6; cursor: pointer; }
+
+/* SUCCESS */
+.success-wrap { width: 100%; max-width: 560px; text-align: center; padding: 20px 0; }
+.success-circle { width: 72px; height: 72px; border-radius: 50%; background: #E8F5E9; border: 2px solid rgba(76,175,80,0.3); display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 20px; }
+.success-title { font-family: 'Cormorant Garamond', serif; font-size: 34px; margin-bottom: 8px; }
+.success-sub { font-size: 13px; color: #888; line-height: 1.8; margin-bottom: 28px; max-width: 400px; margin-left: auto; margin-right: auto; }
+.portal-box { background: #1a1714; border-radius: 10px; padding: 18px 22px; margin-bottom: 20px; text-align: left; }
+.portal-label { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 6px; }
+.portal-url { font-size: 13px; color: #4CAF50; word-break: break-all; }
+.next-steps { background: white; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 20px 22px; text-align: left; }
+.next-steps-label { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: #888; margin-bottom: 14px; }
+.next-step { display: flex; gap: 12px; margin-bottom: 12px; font-size: 13px; color: #555; line-height: 1.5; }
+.next-step:last-child { margin-bottom: 0; }
+.ns-dot { width: 22px; height: 22px; border-radius: 50%; background: #1a1714; color: white; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; flex-shrink: 0; margin-top: 1px; }
+
+/* PANEL SYSTEM */
+.panel { display: none; width: 100%; max-width: 560px; }
+.panel.active { display: block; animation: up 0.22s ease; }
+@keyframes up { from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)} }
+</style>
 </head>
 <body>
 
-<header>
-  <div class="logo">Agape<span>PM</span></div>
-  <div class="header-sub">Host Onboarding</div>
-</header>
+<div class="topnav">
+  <div class="nav-logo">Agape<span>PM</span></div>
+  <div class="nav-login">Already a host? Sign in</div>
+</div>
+<div class="progress-strip"><div class="progress-fill" id="progFill" style="width:25%"></div></div>
 
-<div class="container">
+<div class="page-wrap">
 
-  <div class="progress-header">
-    <div class="progress-title" id="step-title">Welcome to Agape</div>
-    <div class="progress-subtitle" id="step-subtitle">Tell us about yourself to get started</div>
-    <div class="steps-bar" id="steps-bar">
-      <div class="step-pip active" id="pip-1"></div>
-      <div class="step-pip" id="pip-2"></div>
-      <div class="step-pip" id="pip-3"></div>
-      <div class="step-pip" id="pip-4"></div>
-    </div>
-    <div class="steps-label" id="step-counter">Step 1 of 4</div>
-  </div>
-
-  <!-- Step 1: Host Info -->
-  <div class="form-card active" id="step-1">
-    <div class="card-title">About You</div>
-    <div class="card-desc">We'll use this to set up your host account and contact you about your properties.</div>
-    <div class="field">
-      <label>Full Name <span class="required">*</span></label>
-      <input type="text" id="host-name" placeholder="Jane Smith" required/>
-    </div>
-    <div class="field">
-      <label>Email Address <span class="required">*</span></label>
-      <input type="email" id="host-email" placeholder="jane@email.com" required/>
-    </div>
-    <div class="field">
-      <label>Phone Number <span class="required">*</span></label>
-      <input type="tel" id="host-phone" placeholder="(512) 000-0000" required/>
-    </div>
-    <div class="field">
-      <label>How'd You Hear About Us? <span class="opt">(optional)</span></label>
-      <select id="host-source">
-        <option value="">Select…</option>
-        <option>Airbnb community</option>
-        <option>Google search</option>
-        <option>Friend or referral</option>
-        <option>Instagram / social media</option>
-        <option>Other</option>
-      </select>
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-primary" onclick="nextStep(1)">Continue →</button>
+  <!-- STEP 0: ABOUT YOU -->
+  <div class="panel active" id="p0">
+    <div class="step-counter">Step 1 of 4</div>
+    <div class="card">
+      <div class="card-title">About You</div>
+      <div class="card-sub">Tell us who you are</div>
+      <div class="field-row">
+        <div class="field"><label>First name <span class="req">*</span></label><input id="h_first" placeholder="James" oninput="val0()"></div>
+        <div class="field"><label>Last name <span class="req">*</span></label><input id="h_last" placeholder="Rivera" oninput="val0()"></div>
+      </div>
+      <div class="field"><label>Email address <span class="req">*</span></label><input id="h_email" type="email" placeholder="james@email.com" oninput="val0()"></div>
+      <div class="field"><label>Phone number <span class="req">*</span></label><input id="h_phone" type="tel" placeholder="+1 214 555 0100" oninput="val0()"></div>
+      <div class="field"><label>How'd you hear about us? <span class="opt">(optional)</span></label>
+        <select id="h_source">
+          <option value="">Select...</option>
+          <option>Referral from another host</option>
+          <option>Airbnb community</option>
+          <option>Google search</option>
+          <option>Social media</option>
+          <option>Direct from Agape team</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <button class="btn-continue" id="n0" onclick="go(1)" disabled>Continue →</button>
     </div>
   </div>
 
-  <!-- Step 2: Property Info -->
-  <div class="form-card" id="step-2">
-    <div class="card-title">Your Property</div>
-    <div class="card-desc">Tell us about the property you'd like us to manage.</div>
-    <div class="field">
-      <label>Property Address <span class="required">*</span></label>
-      <input type="text" id="prop-address" placeholder="123 Barton Springs Rd" required/>
-    </div>
-    <div class="field-row">
-      <div class="field">
-        <label>City <span class="required">*</span></label>
-        <input type="text" id="prop-city" placeholder="Dallas" required/>
+  <!-- STEP 1: PROPERTY -->
+  <div class="panel" id="p1">
+    <div class="step-counter">Step 2 of 4</div>
+    <div class="card">
+      <div class="card-title">Your Property</div>
+      <div class="card-sub">Tell us about the property you want Agape to manage</div>
+
+      <div class="field"><label>Property address <span class="req">*</span></label>
+        <input id="h_address" placeholder="124 Maple Drive, Dallas TX 75201" oninput="val1()">
       </div>
-      <div class="field">
-        <label>ZIP Code <span class="required">*</span></label>
-        <input type="text" id="prop-zip" placeholder="78704" required/>
+
+      <div class="field-row">
+        <div class="field"><label>Property type <span class="req">*</span></label>
+          <select id="h_type" onchange="onTypeChange(); val1();">
+            <option value="">Select type</option>
+            <option value="str">Airbnb / short-term rental</option>
+            <option value="vacation">Vacation home</option>
+            <option value="longterm">Long-term rental</option>
+            <option value="residential">Primary residence</option>
+          </select>
+        </div>
+        <div class="field"><label>Bedrooms <span class="req">*</span></label>
+          <select id="h_beds" onchange="val1()">
+            <option value="">Select</option>
+            <option>Studio</option>
+            <option>1</option><option>2</option><option>3</option>
+            <option>4</option><option>5</option><option>6+</option>
+          </select>
+        </div>
       </div>
-    </div>
-    <div class="field-row">
-      <div class="field">
-        <label>Bedrooms <span class="required">*</span></label>
-        <input type="number" id="prop-beds" placeholder="3" min="1" max="20" required/>
+
+      <div class="field-row">
+        <div class="field"><label>Bathrooms</label>
+          <select id="h_baths">
+            <option value="">Select</option>
+            <option>1</option><option>1.5</option><option>2</option>
+            <option>2.5</option><option>3</option><option>3+</option>
+          </select>
+        </div>
+        <div class="field"><label>Square footage <span class="req">*</span></label>
+          <input id="h_sqft" type="number" placeholder="1,200" oninput="val1()">
+        </div>
       </div>
-      <div class="field">
-        <label>Bathrooms</label>
-        <input type="number" id="prop-baths" placeholder="2" min="1" max="20" step="0.5"/>
+
+      <!-- STR ONLY: iCal -->
+      <div class="ical-banner" id="icalBanner">
+        <div class="ical-banner-title">🔗 Connect your Airbnb calendar</div>
+        <div class="ical-banner-sub">This lets Agape auto-dispatch your cleaner every time a booking is confirmed — no manual scheduling needed.</div>
       </div>
-    </div>
-    <div class="field">
-      <label>Square Footage <span class="opt">(approx)</span></label>
-      <input type="number" id="prop-sqft" placeholder="1400"/>
-      <div class="field-hint">Used to calculate your cleaning quote</div>
-    </div>
-    <div class="field">
-      <label>Property Type <span class="required">*</span></label>
-      <select id="prop-type" required>
-        <option value="">Select…</option>
-        <option value="airbnb">Airbnb / Short-term rental</option>
-        <option value="longterm">Long-term rental</option>
-        <option value="both">Both STR and long-term</option>
-      </select>
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="prevStep(2)">← Back</button>
-      <button class="btn btn-primary" onclick="nextStep(2)">Continue →</button>
+      <div class="field ical-field" id="icalField">
+        <label>Airbnb iCal link <span class="req">*</span></label>
+        <input id="h_ical" placeholder="https://www.airbnb.com/calendar/ical/..." oninput="val1()">
+        <div class="field-hint">Airbnb → Calendar → Availability settings → Export calendar → Copy link</div>
+      </div>
+
+      <!-- LONG-TERM / RESIDENTIAL ONLY: Schedule -->
+      <div class="field schedule-field" id="scheduleField">
+        <label>Preferred cleaning schedule</label>
+        <select id="h_schedule">
+          <option value="">Select frequency</option>
+          <option>Weekly</option>
+          <option>Bi-weekly (every 2 weeks)</option>
+          <option>Monthly</option>
+          <option>On-demand only</option>
+        </select>
+        <div class="field-hint">We'll set up a recurring schedule. You can change or pause anytime from your portal.</div>
+      </div>
+
+      <div class="field"><label>Access code or entry instructions</label>
+        <input id="h_access" placeholder="Lockbox code 4821# — on front door handle">
+      </div>
+      <div class="field"><label>Special notes for your cleaner <span class="opt">(optional)</span></label>
+        <textarea id="h_notes" placeholder="e.g. Use lavender spray on linens. Guest travels with pets — check under beds."></textarea>
+      </div>
+
+      <button class="btn-continue" id="n1" onclick="go(2)" disabled>Continue →</button>
+      <button class="btn-back" onclick="go(0)">← Back</button>
     </div>
   </div>
 
-  <!-- Step 3: Calendar + Services -->
-  <div class="form-card" id="step-3">
-    <div class="card-title">Calendar & Services</div>
-    <div class="card-desc">Connect your Airbnb calendar so we can auto-dispatch cleaners after each checkout. Select all services you need.</div>
-
-    <!-- iCal Section -->
-    <div class="field">
-      <label>Airbnb iCal Link <span class="required">*</span></label>
-      <input type="url" id="prop-ical" placeholder="https://www.airbnb.com/calendar/ical/..." required/>
-      <div class="field-hint">Paste your Airbnb iCal export URL here — this is how we auto-dispatch after checkouts.</div>
-    </div>
-
-    <div class="ical-card">
-      <div class="ical-title">📅 How to find your iCal link</div>
-      <ol class="ical-steps">
-        <li>Go to <strong>Airbnb.com → Calendar</strong></li>
-        <li>Click <strong>Availability Settings</strong></li>
-        <li>Scroll to <strong>Export Calendar</strong></li>
-        <li>Click <strong>Export Calendar</strong> and copy the .ics URL</li>
-        <li>Paste it above</li>
-      </ol>
-    </div>
-
-    <!-- Services -->
-    <div class="field" style="margin-top:24px">
-      <label>Services Needed <span class="required">*</span></label>
-      <div class="services-grid">
-        <label class="service-check">
-          <input type="checkbox" name="service" value="cleaning" checked/>
-          <span>🧹 Cleaning</span>
-        </label>
-        <label class="service-check">
-          <input type="checkbox" name="service" value="laundry"/>
-          <span>👕 Laundry</span>
-        </label>
-        <label class="service-check">
-          <input type="checkbox" name="service" value="plumbing"/>
-          <span>🔧 Plumbing</span>
-        </label>
-        <label class="service-check">
-          <input type="checkbox" name="service" value="hvac"/>
-          <span>❄️ HVAC</span>
-        </label>
-        <label class="service-check">
-          <input type="checkbox" name="service" value="lawn"/>
-          <span>🌿 Lawn Care</span>
-        </label>
-        <label class="service-check">
-          <input type="checkbox" name="service" value="errands"/>
-          <span>📦 Errands</span>
-        </label>
-        <label class="service-check">
-          <input type="checkbox" name="service" value="moving"/>
-          <span>🚛 Moving</span>
-        </label>
-        <label class="service-check">
-          <input type="checkbox" name="service" value="staging"/>
-          <span>🛋️ Staging</span>
-        </label>
+  <!-- STEP 2: SERVICES -->
+  <div class="panel" id="p2">
+    <div class="step-counter">Step 3 of 4</div>
+    <div class="card">
+      <div class="card-title">Services needed</div>
+      <div class="card-sub">Select everything that applies — you can always add or remove services later</div>
+      <div class="svc-grid">
+        <div class="svc-item" onclick="toggleSvc(this,'cleaning')"><span class="svc-icon">🧹</span><span class="svc-name">Cleaning</span></div>
+        <div class="svc-item" onclick="toggleSvc(this,'plumbing')"><span class="svc-icon">🔧</span><span class="svc-name">Plumbing</span></div>
+        <div class="svc-item" onclick="toggleSvc(this,'hvac')"><span class="svc-icon">❄️</span><span class="svc-name">HVAC</span></div>
+        <div class="svc-item" onclick="toggleSvc(this,'lawn')"><span class="svc-icon">🌿</span><span class="svc-name">Lawn care</span></div>
+        <div class="svc-item" onclick="toggleSvc(this,'laundry')"><span class="svc-icon">👕</span><span class="svc-name">Laundry</span></div>
+        <div class="svc-item" onclick="toggleSvc(this,'moving')"><span class="svc-icon">📦</span><span class="svc-name">Moving</span></div>
+        <div class="svc-item" onclick="toggleSvc(this,'errands')"><span class="svc-icon">🛍</span><span class="svc-name">Errands & staging</span></div>
+        <div class="svc-item" onclick="toggleSvc(this,'interior')"><span class="svc-icon">🪑</span><span class="svc-name">Interior design</span></div>
       </div>
-    </div>
-
-    <div class="field">
-      <label>Host Notes for Cleaners <span class="opt">(optional)</span></label>
-      <textarea id="prop-notes" placeholder="e.g. Garage code is 4291. Check under beds. Always replace shampoo brand X…"></textarea>
-      <div class="field-hint">These notes will be shown to your assigned cleaner before every job.</div>
-    </div>
-
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="prevStep(3)">← Back</button>
-      <button class="btn btn-primary" onclick="nextStep(3)">Continue →</button>
+      <div class="field" style="margin-top:18px;"><label>Preferred schedule / timing <span class="opt">(optional)</span></label>
+        <input id="h_timing" placeholder="e.g. Monday & Thursday, 10am–2pm">
+      </div>
+      <div class="field"><label>Anything else we should know? <span class="opt">(optional)</span></label>
+        <textarea id="h_extra" placeholder="Budget, preferences, recurring guests…" style="min-height:64px;"></textarea>
+      </div>
+      <button class="btn-continue" onclick="go(3)">Review & submit →</button>
+      <button class="btn-back" onclick="go(1)">← Back</button>
     </div>
   </div>
 
-  <!-- Step 4: Review + Submit -->
-  <div class="form-card" id="step-4">
-    <div class="card-title">Review & Submit</div>
-    <div class="card-desc">Everything look right? Hit submit and we'll reach out within 24 hours to confirm your first service.</div>
+  <!-- STEP 3: REVIEW & SUBMIT -->
+  <div class="panel" id="p3">
+    <div class="step-counter">Step 4 of 4</div>
+    <div class="card">
+      <div class="card-title">Review your details</div>
+      <div class="card-sub">Everything look right? Create your password and submit.</div>
+      <div id="reviewRows"></div>
 
-    <div id="review-content" style="margin-bottom:24px; font-size:14px; line-height:1.8; color: var(--muted);">
-      <!-- filled dynamically -->
-    </div>
+      <div style="height:1px;background:#f0f0f0;margin:20px 0;"></div>
 
-    <div class="field">
-      <label>Preferred First Service Date <span class="opt">(optional)</span></label>
-      <input type="text" id="pref-date" placeholder="e.g. After Dec 5 checkout"/>
-    </div>
+      <div class="pass-row">
+        <div class="field"><label>Password <span class="req">*</span></label>
+          <input id="h_pass" type="password" placeholder="Min 8 characters" oninput="val3()">
+        </div>
+        <div class="field"><label>Confirm password <span class="req">*</span></label>
+          <input id="h_pass2" type="password" placeholder="Repeat password" oninput="val3()">
+        </div>
+      </div>
 
-    <div class="field">
-      <label>Anything else we should know? <span class="opt">(optional)</span></label>
-      <textarea id="extra-notes" placeholder="Special instructions, gate codes, parking info…"></textarea>
-    </div>
+      <div class="agree-box" onclick="document.getElementById('h_agree').click()">
+        <input type="checkbox" id="h_agree" onchange="val3()" onclick="event.stopPropagation()">
+        <label for="h_agree">I agree to the <span style="text-decoration:underline;color:#1a1714;">Agape PM terms of service</span>. My property info is kept private and secure.</label>
+      </div>
 
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="prevStep(4)">← Back</button>
-      <button class="btn btn-green" id="btn-submit" onclick="submitForm()">Submit Application ✓</button>
+      <button class="btn-continue" id="n3" onclick="submitHost()" disabled>Create my account →</button>
+      <button class="btn-back" onclick="go(2)">← Back</button>
     </div>
   </div>
 
-  <!-- Step Success -->
-  <div id="step-success" style="display:none">
-    <div class="success-icon">🏡</div>
-    <div class="success-title">You're on the list!</div>
-    <div class="success-sub">We'll review your application and reach out within 24 hours to confirm your first service. Welcome to Agape.</div>
-    <div class="success-actions">
-      <a href="/portal/" style="text-decoration:none">
-        <button class="btn btn-primary" style="width:100%">Go to Host Portal →</button>
-      </a>
-      <a href="/" style="text-decoration:none">
-        <button class="btn btn-secondary" style="width:100%">Back to Home</button>
-      </a>
+  <!-- SUCCESS -->
+  <div class="panel" id="pSuccess">
+    <div class="success-wrap">
+      <div class="success-circle">✓</div>
+      <div class="success-title">Welcome to Agape.</div>
+      <div class="success-sub">Your property is registered and your portal is ready. A confirmation has been sent to <strong id="confEmail"></strong>.</div>
+      <div class="portal-box">
+        <div class="portal-label">Your host portal</div>
+        <div class="portal-url">agapepm.netlify.app/portal/</div>
+      </div>
+      <div class="next-steps">
+        <div class="next-steps-label">What happens next</div>
+        <div class="next-step"><div class="ns-dot">1</div>We'll match your property with a qualified Agape cleaner within 24 hours</div>
+        <div class="next-step"><div class="ns-dot">2</div>Your cleaner will be dispatched automatically when a booking is confirmed</div>
+        <div class="next-step"><div class="ns-dot">3</div>After every job you'll receive a full photo report and can approve payment from your portal</div>
+      </div>
     </div>
   </div>
 
 </div>
 
-<div class="toast" id="toast"></div>
-
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, serverTimestamp }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, doc, setDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyA4zPUPv5WjTbwdX2cjqxSEe0zJLKPsGC8",
-    authDomain: "agape-property-management.firebaseapp.com",
-    projectId: "agape-property-management",
-    storageBucket: "agape-property-management.firebasestorage.app",
-    messagingSenderId: "1083257058058",
-    appId: "1:1083257058058:web:0700dfdab2700c0ee280f3",
-    measurementId: "G-K09Y3VP7NW"
-  };
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+const firebaseConfig = {
+  apiKey:            "AIzaSyA4zPUPv5WjTbwdX2cjqxSEe0zJLKPsGC8",
+  authDomain:        "agape-property-management.firebaseapp.com",
+  projectId:         "agape-property-management",
+  storageBucket:     "agape-property-management.firebasestorage.app",
+  messagingSenderId: "1083257058058",
+  appId:             "1:1083257058058:web:0700dfdab2700c0ee280f3"
+};
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
 
-  let currentStep = 1;
-  const totalSteps = 4;
+window._submitToFirebase = async function(d) {
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, d.email, d.password);
+    const uid  = cred.user.uid;
+    await setDoc(doc(db,'users',uid), { uid, email:d.email, role:'host', firstName:d.firstName, lastName:d.lastName, phone:d.phone, createdAt:serverTimestamp() });
+    const propRef = await addDoc(collection(db,'properties'), {
+      hostUid:uid, hostEmail:d.email, hostName:d.firstName+' '+d.lastName,
+      address:d.address, type:d.type, bedrooms:parseInt(d.beds)||0,
+      bathrooms:parseFloat(d.baths)||0, sqft:parseInt(d.sqft)||0,
+      accessCode:d.access, cleanerNotes:d.notes, services:d.services,
+      timing:d.timing, extra:d.extra,
+      icalLink:d.icalLink||null, cleanSchedule:d.schedule||null,
+      active:true, createdAt:serverTimestamp()
+    });
+    await setDoc(doc(db,'users',uid),{propertyId:propRef.id},{merge:true});
+    return { ok:true };
+  } catch(e) {
+    return { ok:false, error:e.message };
+  }
+};
+</script>
 
-  const stepMeta = [
-    null,
-    { title: 'About You', subtitle: 'Tell us who you are' },
-    { title: 'Your Property', subtitle: 'Details about your rental' },
-    { title: 'Calendar & Services', subtitle: 'Connect Airbnb and select needs' },
-    { title: 'Review & Submit', subtitle: 'Almost done!' },
-  ];
+<script>
+var svcs = [];
+var currentStep = 0;
 
-  window.nextStep = function(from) {
-    if (!validateStep(from)) return;
-    if (from === 3) buildReview();
-    goToStep(from + 1);
-  };
+function v(id){ var el=document.getElementById(id); return el ? el.value.trim() : ''; }
 
-  window.prevStep = function(from) {
-    goToStep(from - 1);
-  };
-
-  function goToStep(n) {
-    document.getElementById(`step-${currentStep}`).classList.remove('active');
+function go(n) {
+  document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
+  document.getElementById(n === 'success' ? 'pSuccess' : 'p'+n).classList.add('active');
+  if (typeof n === 'number') {
     currentStep = n;
-    document.getElementById(`step-${currentStep}`).classList.add('active');
-    updateProgress();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    var pct = [25,50,75,100][n] || 100;
+    document.getElementById('progFill').style.width = pct + '%';
+    if (n === 3) buildReview();
+  } else {
+    document.getElementById('progFill').style.width = '100%';
   }
+  window.scrollTo(0,0);
+}
 
-  function updateProgress() {
-    document.getElementById('step-title').textContent = stepMeta[currentStep].title;
-    document.getElementById('step-subtitle').textContent = stepMeta[currentStep].subtitle;
-    document.getElementById('step-counter').textContent = `Step ${currentStep} of ${totalSteps}`;
-    for (let i = 1; i <= totalSteps; i++) {
-      const pip = document.getElementById(`pip-${i}`);
-      pip.className = 'step-pip' + (i < currentStep ? ' done' : i === currentStep ? ' active' : '');
-    }
-  }
+function val0() {
+  document.getElementById('n0').disabled = !(v('h_first') && v('h_last') && v('h_email') && v('h_phone'));
+}
 
-  function validateStep(step) {
-    const required = document.querySelectorAll(`#step-${step} [required]`);
-    for (const el of required) {
-      if (!el.value.trim()) {
-        el.focus();
-        toast('Please fill in all required fields', 'error-toast');
-        return false;
-      }
-    }
-    // iCal URL validation
-    if (step === 3) {
-      const ical = document.getElementById('prop-ical').value.trim();
-      if (ical && !ical.startsWith('http')) {
-        toast('iCal link should start with https://', 'error-toast');
-        return false;
-      }
-      const services = document.querySelectorAll('input[name="service"]:checked');
-      if (services.length === 0) {
-        toast('Please select at least one service', 'error-toast');
-        return false;
-      }
-    }
-    return true;
-  }
+function val1() {
+  var type = v('h_type');
+  var isSTR = type === 'str' || type === 'vacation';
+  var icalOk = !isSTR || (v('h_ical').length > 10);
+  document.getElementById('n1').disabled = !(v('h_address') && type && v('h_beds') && v('h_sqft') && icalOk);
+}
 
-  function buildReview() {
-    const services = [...document.querySelectorAll('input[name="service"]:checked')]
-      .map(el => el.value).join(', ');
-    document.getElementById('review-content').innerHTML = `
-      <p><strong>Name:</strong> ${val('host-name')}</p>
-      <p><strong>Email:</strong> ${val('host-email')}</p>
-      <p><strong>Phone:</strong> ${val('host-phone')}</p>
-      <p><strong>Address:</strong> ${val('prop-address')}, ${val('prop-city')} ${val('prop-zip')}</p>
-      <p><strong>Property:</strong> ${val('prop-beds')} bed / ${val('prop-baths')} bath — ${val('prop-sqft')} sqft</p>
-      <p><strong>Type:</strong> ${val('prop-type')}</p>
-      <p><strong>Services:</strong> ${services}</p>
-      <p><strong>iCal:</strong> ${val('prop-ical') ? '✅ Connected' : '❌ Not provided'}</p>
-    `;
-  }
+function val3() {
+  var p1 = document.getElementById('h_pass').value;
+  var p2 = document.getElementById('h_pass2').value;
+  var agreed = document.getElementById('h_agree').checked;
+  document.getElementById('n3').disabled = !(p1.length >= 8 && p1 === p2 && agreed);
+}
 
-  window.submitForm = async function() {
-    const btn = document.getElementById('btn-submit');
-    btn.disabled = true;
-    btn.textContent = 'Submitting…';
+function onTypeChange() {
+  var type = v('h_type');
+  var isSTR = type === 'str' || type === 'vacation';
+  var isLTR = type === 'longterm' || type === 'residential';
+  document.getElementById('icalBanner').style.display = isSTR ? 'block' : 'none';
+  document.getElementById('icalField').style.display  = isSTR ? 'block' : 'none';
+  document.getElementById('scheduleField').style.display = isLTR ? 'block' : 'none';
+}
 
-    const services = [...document.querySelectorAll('input[name="service"]:checked')]
-      .map(el => el.value);
+function toggleSvc(el, svc) {
+  el.classList.toggle('on');
+  svcs = svcs.includes(svc) ? svcs.filter(function(s){return s!==svc;}) : svcs.concat(svc);
+}
 
-    const hostData = {
-      name: val('host-name'),
-      email: val('host-email'),
-      phone: val('host-phone'),
-      source: val('host-source'),
-      createdAt: serverTimestamp(),
-    };
+function buildReview() {
+  var type = v('h_type');
+  var isSTR = type === 'str' || type === 'vacation';
+  var typeLabel = { str:'Airbnb / short-term rental', vacation:'Vacation home', longterm:'Long-term rental', residential:'Primary residence' }[type] || type;
+  var rows = [
+    ['Name', v('h_first')+' '+v('h_last')],
+    ['Email', v('h_email')],
+    ['Phone', v('h_phone')],
+    ['Address', v('h_address')],
+    ['Type', typeLabel],
+    ['Bedrooms', v('h_beds')],
+    ['Sqft', v('h_sqft')],
+    ['Services', svcs.length ? svcs.join(', ') : 'None selected'],
+  ];
+  if (isSTR && v('h_ical')) rows.push(['Airbnb calendar', 'Connected ✓']);
+  if (!isSTR && v('h_schedule')) rows.push(['Clean schedule', v('h_schedule')]);
+  document.getElementById('reviewRows').innerHTML = rows.map(function(r){
+    return '<div class="review-row"><span class="review-label">'+r[0]+'</span><span class="review-value">'+r[1]+'</span></div>';
+  }).join('');
+}
 
-    const propertyData = {
-      address: val('prop-address'),
-      city: val('prop-city'),
-      zip: val('prop-zip'),
-      bedrooms: Number(val('prop-beds')),
-      bathrooms: Number(val('prop-baths')),
-      sqft: Number(val('prop-sqft')) || null,
-      type: val('prop-type'),
-      icalUrl: val('prop-ical'),            // ← iCal field saved here
-      services: services,
-      hostNotes: val('prop-notes'),
-      preferredStartDate: val('pref-date'),
-      extraNotes: val('extra-notes'),
-      hostName: val('host-name'),
-      hostEmail: val('host-email'),
-      hostPhone: val('host-phone'),
-      status: 'pending',
-      createdAt: serverTimestamp(),
-    };
+function submitHost() {
+  var btn = document.getElementById('n3');
+  btn.disabled = true; btn.textContent = 'Creating your account…';
 
-    try {
-      // Save to Firestore
-      const hostRef = await addDoc(collection(db, 'users'), { ...hostData, role: 'host' });
-      await addDoc(collection(db, 'properties'), { ...propertyData, hostId: hostRef.id });
-
-      // Show success
-      document.getElementById(`step-${currentStep}`).classList.remove('active');
-      document.querySelector('.progress-header').style.display = 'none';
-      document.getElementById('step-success').style.display = 'block';
-    } catch (err) {
-      console.error(err);
-      toast('Submission failed. Please try again.', 'error-toast');
-      btn.disabled = false;
-      btn.textContent = 'Submit Application ✓';
-    }
+  var type = v('h_type');
+  var isSTR = type === 'str' || type === 'vacation';
+  var data = {
+    email:v('h_email'), password:document.getElementById('h_pass').value,
+    firstName:v('h_first'), lastName:v('h_last'),
+    phone:v('h_phone'), source:v('h_source'),
+    address:v('h_address'), type:type,
+    beds:v('h_beds'), baths:v('h_baths'),
+    sqft:v('h_sqft'), access:v('h_access'),
+    notes:v('h_notes'), services:svcs,
+    timing:v('h_timing'), extra:v('h_extra'),
+    icalLink: isSTR ? v('h_ical') : null,
+    schedule: !isSTR ? v('h_schedule') : null
   };
 
-  function val(id) {
-    return (document.getElementById(id)?.value || '').trim();
+  if (window._submitToFirebase) {
+    window._submitToFirebase(data).then(function(res) {
+      if (!res.ok) {
+        btn.disabled = false;
+        btn.textContent = 'Create my account →';
+        alert('Error: ' + res.error);
+        return;
+      }
+      // ── SEND TO GHL ─────────────────────────────────────
+      sendToGHL(data, res.uid);
+      document.getElementById('confEmail').textContent = data.email;
+      go('success');
+    });
+  } else {
+    document.getElementById('confEmail').textContent = data.email;
+    go('success');
   }
+}
 
-  function toast(msg, cls = '') {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className = 'toast ' + cls + ' show';
-    setTimeout(() => t.classList.remove('show'), 3000);
-  }
+// ── GHL WEBHOOK ──────────────────────────────────────────────
+// API key is injected via Netlify environment variable at build time
+// Set GHL_API_KEY in Netlify dashboard → Site settings → Environment variables
+function sendToGHL(data, firebaseUid) {
+  // GHL API endpoint for creating contacts
+  var GHL_LOCATION_ID = 'QUGochbLsYBDSBmPqUCr';
+  var GHL_API_KEY = 'NETLIFY_GHL_API_KEY';
+
+  var contactPayload = {
+    firstName:    data.firstName,
+    lastName:     data.lastName,
+    email:        data.email,
+    phone:        data.phone,
+    address1:     data.address,
+    source:       'Agape Host Onboarding',
+    tags:         ['host', 'essential', data.type === 'str' ? 'airbnb' : 'long-term'],
+    customField: [
+      { id: 'property_address',  value: data.address },
+      { id: 'bedrooms',          value: data.beds },
+      { id: 'bathrooms',         value: data.baths },
+      { id: 'sqft',              value: data.sqft },
+      { id: 'property_type',     value: data.type },
+      { id: 'host_tier',         value: 'essential' },
+      { id: 'default_service',   value: 'turnover' },
+      { id: 'ical_link',         value: data.icalLink || '' },
+      { id: 'access_notes',      value: data.access },
+      { id: 'cleaner_notes',     value: data.notes },
+      { id: 'firebase_uid',      value: firebaseUid || '' },
+      { id: 'signup_source',     value: data.source || 'website' },
+    ]
+  };
+
+  // Send to GHL Contacts API
+  fetch('https://services.leadconnectorhq.com/contacts/', {
+    method: 'POST',
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization': 'Bearer ' + GHL_API_KEY,
+      'Version':       '2021-07-28'
+    },
+    body: JSON.stringify(contactPayload)
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(ghlRes) {
+    if (ghlRes.contact && ghlRes.contact.id) {
+      // Contact created — now create opportunity in Agape Jobs pipeline
+      createGHLOpportunity(ghlRes.contact.id, data, GHL_API_KEY, GHL_LOCATION_ID);
+      console.log('GHL contact created:', ghlRes.contact.id);
+    } else {
+      console.warn('GHL contact creation issue:', ghlRes);
+    }
+  })
+  .catch(function(err) {
+    // Silent fail — Firebase already saved, GHL is secondary
+    console.warn('GHL webhook failed:', err);
+  });
+}
+
+function createGHLOpportunity(contactId, data, apiKey, locationId) {
+  // First fetch the pipeline to get the correct stage ID dynamically
+  var PIPELINE_ID = 'rO9piWzheJ2TFhFmgfvp';
+
+  fetch('https://services.leadconnectorhq.com/opportunities/pipelines/' + PIPELINE_ID, {
+    method: 'GET',
+    headers: {
+      'Authorization': 'Bearer ' + apiKey,
+      'Version':       '2021-07-28'
+    }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(pipeline) {
+    // Find the Scheduled stage ID dynamically
+    var stages = pipeline.stages || pipeline.pipeline && pipeline.pipeline.stages || [];
+    var scheduledStage = stages.find(function(s) {
+      return s.name && s.name.toLowerCase().includes('scheduled');
+    });
+    var stageId = scheduledStage ? scheduledStage.id : stages[0] && stages[0].id;
+
+    var opportunityPayload = {
+      pipelineId:      PIPELINE_ID,
+      locationId:      locationId,
+      name:            data.firstName + ' ' + data.lastName + ' — ' + data.address,
+      pipelineStageId: stageId,
+      status:          'open',
+      contactId:       contactId,
+      monetaryValue:   0,
+      customFields: [
+        { id: 'property_address', value: data.address },
+        { id: 'bedrooms',         value: data.beds },
+        { id: 'host_tier',        value: 'essential' },
+        { id: 'default_service',  value: 'turnover' },
+      ]
+    };
+
+    return fetch('https://services.leadconnectorhq.com/opportunities/', {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': 'Bearer ' + apiKey,
+        'Version':       '2021-07-28'
+      },
+      body: JSON.stringify(opportunityPayload)
+    });
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(res) {
+    console.log('GHL opportunity created:', res);
+  })
+  .catch(function(err) {
+    console.warn('GHL opportunity creation failed:', err);
+  });
+}
 </script>
 </body>
 </html>
